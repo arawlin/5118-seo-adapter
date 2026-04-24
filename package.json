@@ -1,0 +1,25 @@
+{
+  "name": "5118-seo-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone MCP wrapper for official 5118 APIs.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:live": "node scripts/test-live-gate.mjs",
+    "test:live:debug": "node --inspect-brk scripts/test-live-gate.mjs --verbose"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "25.6.0",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3",
+    "vitest": "4.1.4"
+  }
+}

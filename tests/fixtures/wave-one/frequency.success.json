@@ -1,0 +1,18 @@
+{
+  "errcode": "0",
+  "errmsg": "success",
+  "data": {
+    "list": [
+      {
+        "word": "%E6%AF%94%E7%89%B9%E5%B8%81",
+        "ratio": "0.82",
+        "count": "120"
+      },
+      {
+        "word": "%E5%8C%BA%E5%9D%97%E9%93%BE",
+        "ratio": "0.56",
+        "count": "78"
+      }
+    ]
+  }
+}

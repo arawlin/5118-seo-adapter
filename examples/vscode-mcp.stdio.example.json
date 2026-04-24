@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "5118-seo-adapter": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/Users/axe/work/seo/5118-seo-adapter/dist/index.js"
+      ],
+      "env": {
+        "API_KEY": "your-5118-api-key"
+      }
+    }
+  }
+}

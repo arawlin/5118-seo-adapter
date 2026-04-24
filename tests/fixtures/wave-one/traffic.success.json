@@ -1,0 +1,18 @@
+{
+  "errcode": "0",
+  "errmsg": "success",
+  "data": {
+    "list": [
+      {
+        "keyword": "%E6%AF%94%E7%89%B9%E5%B8%81%E8%A1%8C%E6%83%85",
+        "index": "8800",
+        "rank": "3",
+        "url": "https%3A%2F%2Fexample.com%2Fbtc"
+      }
+    ],
+    "page_index": 1,
+    "page_size": 20,
+    "page_count": 1,
+    "total": 1
+  }
+}
