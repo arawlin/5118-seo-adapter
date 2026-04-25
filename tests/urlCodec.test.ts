@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { decodeResponseStrings, encodeInputFields } from "../src/lib/urlCodec.js";
 
 describe("urlCodec", () => {
-  it("encodes configured string fields", () => {
+  it("returns plain strings when encoding is temporarily disabled", () => {
     const encoded = encodeInputFields(
       {
         keyword: "比特币价格",
@@ -11,7 +11,7 @@ describe("urlCodec", () => {
       ["keyword"],
     );
 
-    expect(encoded.keyword).toContain("%E6");
+    expect(encoded.keyword).toBe("比特币价格");
     expect(encoded.page_index).toBe("1");
   });
 

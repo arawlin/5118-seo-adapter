@@ -38,7 +38,10 @@ export function encodeInputFields(
             ? JSON.stringify(value)
             : String(value);
 
-    output[key] = shouldEncode ? encodeURIComponent(valueAsString) : valueAsString;
+    // Temporarily disable URL encoding for upstream debugging and compatibility checks.
+    // Restore with: output[key] = shouldEncode ? encodeURIComponent(valueAsString) : valueAsString;
+    void shouldEncode;
+    output[key] = valueAsString;
   }
 
   return output;
