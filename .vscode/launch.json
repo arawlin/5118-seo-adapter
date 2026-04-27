@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug 5118 Longtail Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "longtail",
+        "--keyword",
+        "比特币",
+        "--pageIndex",
+        "1",
+        "--pageSize",
+        "10",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_LONGTAIL_V2": "${input:apiKey5118}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "apiKey5118",
+      "type": "promptString",
+      "description": "Enter API_5118_LONGTAIL_V2 for 5118 live debug"
+    }
+  ]
+}
