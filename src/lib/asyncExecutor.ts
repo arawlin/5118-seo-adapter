@@ -29,11 +29,16 @@ export interface ExecuteAsyncToolOptions<TData> {
   defaultMaxWaitSeconds: number;
   defaultPollIntervalSeconds?: number;
   pendingCodes?: Array<string | number>;
+  isPendingResult?: (raw: unknown) => boolean;
   submit: () => Promise<unknown>;
   poll: (taskId: string | number) => Promise<unknown>;
   extractTaskId: (raw: unknown) => string | number | undefined;
   normalizeData: (raw: unknown) => { data: TData; pagination?: PaginationInfo | null };
 }
+
+type EvaluationResult<TData> =
+  | { kind: "continue" }
+  | { kind: "done"; envelope: ResponseEnvelope<TData> };
 
 function buildCompletedEnvelope<TData>(
   options: ExecuteAsyncToolOptions<TData>,
@@ -92,28 +97,44 @@ export async function executeAsyncTool<TData>(
   const maxWaitSeconds = options.maxWaitSeconds ?? options.defaultMaxWaitSeconds;
 
   let taskId = options.taskId;
+  let shouldDelayBeforeFirstPoll = false;
 
-  const evaluateOne = (raw: unknown): ResponseEnvelope<TData> | "continue" => {
+  const resolvePending = (raw: unknown): EvaluationResult<TData> => {
+    const extractedTaskId = options.extractTaskId(raw) ?? taskId;
+
+    if (extractedTaskId === undefined) {
+      throw new ToolError("MISSING_TASK_ID", "Pending response did not include taskId.", false, raw);
+    }
+
+    taskId = extractedTaskId;
+
+    if (mode === "wait") {
+      shouldDelayBeforeFirstPoll = true;
+      return { kind: "continue" };
+    }
+
+    return {
+      kind: "done",
+      envelope: buildPendingEnvelope(options, raw, extractedTaskId),
+    };
+  };
+
+  const evaluateOne = (raw: unknown): EvaluationResult<TData> => {
     const code = getErrcode(raw);
 
     if (isVendorSuccess(raw)) {
-      return buildCompletedEnvelope(options, raw, taskId);
+      if (options.isPendingResult?.(raw) === true) {
+        return resolvePending(raw);
+      }
+
+      return {
+        kind: "done",
+        envelope: buildCompletedEnvelope(options, raw, taskId),
+      };
     }
 
     if (code && pendingCodes.has(code)) {
-      const extractedTaskId = options.extractTaskId(raw) ?? taskId;
-
-      if (extractedTaskId === undefined) {
-        throw new ToolError("MISSING_TASK_ID", "Pending response did not include taskId.", false, raw);
-      }
-
-      taskId = extractedTaskId;
-
-      if (mode === "wait") {
-        return "continue";
-      }
-
-      return buildPendingEnvelope(options, raw, extractedTaskId);
+      return resolvePending(raw);
     }
 
     throwMappedError(raw);
@@ -121,7 +142,17 @@ export async function executeAsyncTool<TData>(
 
   if (mode === "submit") {
     const submitRaw = await options.submit();
-    return evaluateOne(submitRaw) as ResponseEnvelope<TData>;
+    const submitResult = evaluateOne(submitRaw);
+
+    if (submitResult.kind === "done") {
+      return submitResult.envelope;
+    }
+
+    if (taskId === undefined) {
+      throw new ToolError("MISSING_TASK_ID", "submit mode could not establish a valid taskId.");
+    }
+
+    return buildPendingEnvelope(options, submitRaw, taskId);
   }
 
   if (mode === "poll") {
@@ -130,15 +161,21 @@ export async function executeAsyncTool<TData>(
     }
 
     const pollRaw = await options.poll(taskId);
-    return evaluateOne(pollRaw) as ResponseEnvelope<TData>;
+    const pollResult = evaluateOne(pollRaw);
+
+    if (pollResult.kind === "done") {
+      return pollResult.envelope;
+    }
+
+    return buildPendingEnvelope(options, pollRaw, taskId);
   }
 
   if (taskId === undefined) {
     const submitRaw = await options.submit();
     const submitResult = evaluateOne(submitRaw);
 
-    if (submitResult !== "continue") {
-      return submitResult;
+    if (submitResult.kind === "done") {
+      return submitResult.envelope;
     }
   }
 
@@ -149,6 +186,11 @@ export async function executeAsyncTool<TData>(
   const startedAt = Date.now();
 
   while (true) {
+    if (shouldDelayBeforeFirstPoll) {
+      await sleep(pollIntervalSeconds);
+      shouldDelayBeforeFirstPoll = false;
+    }
+
     if ((Date.now() - startedAt) / 1000 > maxWaitSeconds) {
       throw new ToolError(
         "POLL_TIMEOUT",
@@ -160,8 +202,8 @@ export async function executeAsyncTool<TData>(
     const pollRaw = await options.poll(taskId);
     const pollResult = evaluateOne(pollRaw);
 
-    if (pollResult !== "continue") {
-      return pollResult;
+    if (pollResult.kind === "done") {
+      return pollResult.envelope;
     }
 
     await sleep(pollIntervalSeconds);
