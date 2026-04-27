@@ -79,13 +79,38 @@ export function createServer(): McpServer {
     "get_keyword_metrics_5118",
     {
       title: "Get Keyword Metrics 5118",
-      description: "Fetch async keyword metrics from 5118 /keywordparam/v2.",
+      description:
+        "Two-phase async keyword metrics query via 5118 /keywordparam/v2. " +
+        "Usage: (1) submit with keywords to obtain taskId, " +
+        "(2) poll with taskId to fetch latest status/result, " +
+        "(3) wait to submit and auto-poll until completion or timeout. " +
+        "Response envelope: pending returns executionStatus=pending with taskId and data=null; completed returns executionStatus=completed with data.items[]. " +
+        "Each normalized item may include keyword, index, mobileIndex, longKeywordCount, bidCompanyCount, cpc, and competition. " +
+        "Additional official vendor fields remain available under raw.data.keyword_param[].",
       inputSchema: {
-        keywords: z.array(z.string().min(1)).max(50).optional(),
-        executionMode: z.enum(["submit", "poll", "wait"]).optional(),
-        taskId: z.union([z.string(), z.number()]).optional(),
-        maxWaitSeconds: z.number().positive().optional(),
-        pollIntervalSeconds: z.number().positive().optional(),
+        keywords: z
+          .array(z.string().min(1))
+          .max(50)
+          .optional()
+          .describe("Keywords to query. Required for submit and for wait without taskId. Max 50."),
+        executionMode: z
+          .enum(["submit", "poll", "wait"])
+          .optional()
+          .describe("Async execution mode. submit returns taskId, poll queries by taskId, wait auto-polls."),
+        taskId: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe("Existing async task identifier. Required in poll mode."),
+        maxWaitSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Maximum wait duration in seconds for wait mode before timeout."),
+        pollIntervalSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Polling interval in seconds for wait mode. Defaults to 60 seconds if omitted."),
       },
     },
     async (input) => toToolResult(await getKeywordMetrics5118Handler(input)),
