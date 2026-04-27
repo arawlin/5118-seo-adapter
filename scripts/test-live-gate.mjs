@@ -17,15 +17,23 @@ const TOOL_ALIASES = new Map([
   ["traffic", "get_mobile_traffic_keywords_5118"],
 ]);
 
+const TOOL_REQUIRED_ENV_VARS = new Map([
+  ["get_longtail_keywords_5118", "API_5118_LONGTAIL_V2"],
+  ["get_industry_frequency_words_5118", "API_5118_FREQ_WORDS"],
+  ["get_suggest_terms_5118", "API_5118_SUGGEST"],
+  ["get_keyword_metrics_5118", "API_5118_KW_PARAM_V2"],
+  ["get_mobile_traffic_keywords_5118", "API_5118_TRAFFIC"],
+]);
+
 function printUsage() {
   console.log(`5118 Live Runner
 
 Usage:
-  API_KEY=xxxx npm run test:live
-  API_KEY=xxxx npm run test:live -- --tool suggest --word "比特币" --platform baidu --verbose
-  API_KEY=xxxx npm run test:live -- --tool metrics --keywords "比特币价格,比特币是什么" --executionMode wait
-  API_KEY=xxxx npm run test:live -- --scenario wave-one
-  API_KEY=xxxx npm run test:live:debug -- --tool suggest --word "比特币"
+  API_5118_SUGGEST=xxxx npm run test:live
+  API_5118_SUGGEST=xxxx npm run test:live -- --tool suggest --word "比特币" --platform baidu --verbose
+  API_5118_KW_PARAM_V2=xxxx npm run test:live -- --tool metrics --keywords "比特币价格,比特币是什么" --executionMode wait
+  API_5118_LONGTAIL_V2=xxxx API_5118_FREQ_WORDS=xxxx API_5118_SUGGEST=xxxx API_5118_KW_PARAM_V2=xxxx API_5118_TRAFFIC=xxxx npm run test:live -- --scenario wave-one
+  API_5118_SUGGEST=xxxx npm run test:live:debug -- --tool suggest --word "比特币"
 
 Options:
   --tool <name>                 Tool alias or full MCP tool name
@@ -101,6 +109,23 @@ function resolveToolName(rawTool) {
   }
 
   return TOOL_ALIASES.get(rawTool) ?? rawTool;
+}
+
+function getRequiredEnvVarForTool(toolName) {
+  return TOOL_REQUIRED_ENV_VARS.get(toolName);
+}
+
+function assertToolEnv(toolName) {
+  const envVar = getRequiredEnvVarForTool(toolName);
+  if (!envVar) {
+    throw new Error(`No API key env mapping configured for ${toolName}.`);
+  }
+
+  if (!process.env[envVar]?.trim()) {
+    throw new Error(
+      `Missing ${envVar}. Set ${envVar} before running live checks for ${toolName}.`,
+    );
+  }
 }
 
 async function loadHandlers() {
@@ -203,6 +228,8 @@ async function runSingle(values, handlers) {
     throw new Error("Cannot resolve tool name.");
   }
 
+  assertToolEnv(toolName);
+
   const handler = handlers[toolName];
   if (!handler) {
     throw new Error(`Tool handler not found for ${toolName}`);
@@ -233,6 +260,31 @@ async function runScenario(values, handlers) {
   }
 
   const steps = [...sequence.steps].sort((a, b) => Number(a.order) - Number(b.order));
+
+  const requiredEnvVars = new Set();
+  for (const step of steps) {
+    const toolName = resolveToolName(step.tool);
+    if (!toolName) {
+      throw new Error(`Cannot resolve step tool: ${String(step.tool)}`);
+    }
+
+    const envVar = getRequiredEnvVarForTool(toolName);
+    if (!envVar) {
+      throw new Error(`No API key env mapping configured for ${toolName}.`);
+    }
+
+    requiredEnvVars.add(envVar);
+  }
+
+  const missingEnvVars = [...requiredEnvVars].filter(
+    (envVar) => !process.env[envVar]?.trim(),
+  );
+
+  if (missingEnvVars.length > 0) {
+    throw new Error(
+      `Missing API key env vars for scenario ${scenarioName}: ${missingEnvVars.join(", ")}.`,
+    );
+  }
 
   for (const step of steps) {
     const toolName = resolveToolName(step.tool);
@@ -279,10 +331,6 @@ async function main() {
   if (values.help === true) {
     printUsage();
     return;
-  }
-
-  if (!process.env.API_KEY?.trim()) {
-    throw new Error("Missing API_KEY. Set API_KEY before running live checks.");
   }
 
   const handlers = await loadHandlers();
