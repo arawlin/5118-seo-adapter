@@ -26,6 +26,30 @@
       "skipFiles": [
         "<node_internals>/**"
       ]
+    },
+    {
+      "name": "Debug 5118 Metrics Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "metrics",
+        "--keywords",
+        "NBA",
+        "--executionMode",
+        "wait",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_KW_PARAM_V2": "${input:apiKey5118Metrics}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     }
   ],
   "inputs": [
@@ -33,6 +57,11 @@
       "id": "apiKey5118",
       "type": "promptString",
       "description": "Enter API_5118_LONGTAIL_V2 for 5118 live debug"
+    },
+    {
+      "id": "apiKey5118Metrics",
+      "type": "promptString",
+      "description": "Enter API_5118_KW_PARAM_V2 for 5118 metrics debug"
     }
   ]
 }
