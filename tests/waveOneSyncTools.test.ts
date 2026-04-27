@@ -8,7 +8,9 @@ import { jsonResponse, readFixture } from "./testUtils.js";
 const ENV_SNAPSHOT = { ...process.env };
 
 function applyTestApiEnv(): void {
-  process.env.API_KEY = "k-wave-one";
+  process.env.API_5118_LONGTAIL_V2 = "k-longtail";
+  process.env.API_5118_FREQ_WORDS = "k-freq";
+  process.env.API_5118_SUGGEST = "k-suggest";
 }
 
 describe("sync tools", () => {

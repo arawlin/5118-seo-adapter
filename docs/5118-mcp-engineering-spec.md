@@ -78,7 +78,7 @@ tool contracts and shared rules defined here.
 | Auth header | `Authorization: <APIKEY>` with the raw key value and no prefix |
 | Success condition | `errcode == "0"` |
 | Common response fields | `errcode`, `errmsg`, plus tool-specific payload |
-| API key model | The current implementation uses one shared env var: `API_KEY` |
+| API key model | Use one independent env var per API/tool |
 | Request encoding | URL-encode text fields that may contain Chinese or long text |
 | Response decoding | URL-decode returned string fields before exposing normalized data |
 | Raw payload retention | Always keep the original vendor JSON under `raw` |
@@ -90,7 +90,7 @@ tool contracts and shared rules defined here.
 The generated MCP project should include these shared modules before any tool
 implementation begins.
 
-- Config registry: maps each MCP tool to one shared key env var for the currently implemented tool set.
+- Config registry: maps each MCP tool to its own required API key env var.
 - 5118 HTTP client: sends authenticated form requests.
 - Encoding layer: URL-encodes required request fields and URL-decodes returned
   strings.
@@ -241,17 +241,17 @@ These values are important because code generation often gets them wrong.
 
 | MCP tool | Official API / endpoint | Env var | Mode | Required input | Key options | Normalized data field | Constraints and notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `get_longtail_keywords_5118` | Massive Long-tail Keyword Mining v2 / `/keyword/word/v2` | `API_KEY` | Sync | `keyword` | `pageIndex`, `pageSize`, `sortField`, `sortType`, `filter`, `filterDate` | `keywords[]` | `pageSize <= 100`; supports sorting and quick filters |
-| `get_industry_frequency_words_5118` | Industry Frequency Analysis / `/tradeseg` | `API_KEY` | Sync | `keyword` | none | `frequencyWords[]` | Returns high-frequency segmentation words and ratios |
-| `get_suggest_terms_5118` | Suggestion Mining / `/suggest/list` | `API_KEY` | Sync | `word`, `platform` | none | `suggestions[]` | `platform` must be one of the documented vendor values |
-| `get_keyword_metrics_5118` | Keyword Search Volume Info v2 / `/keywordparam/v2` | `API_KEY` | Async | `keywords[]` | async control fields | `items[]` | Max 50 keywords; vendor uses `\|` delimiter; pending may return `101` |
+| `get_longtail_keywords_5118` | Massive Long-tail Keyword Mining v2 / `/keyword/word/v2` | `API_5118_LONGTAIL_V2` | Sync | `keyword` | `pageIndex`, `pageSize`, `sortField`, `sortType`, `filter`, `filterDate` | `keywords[]` | `pageSize <= 100`; supports sorting and quick filters |
+| `get_industry_frequency_words_5118` | Industry Frequency Analysis / `/tradeseg` | `API_5118_FREQ_WORDS` | Sync | `keyword` | none | `frequencyWords[]` | Returns high-frequency segmentation words and ratios |
+| `get_suggest_terms_5118` | Suggestion Mining / `/suggest/list` | `API_5118_SUGGEST` | Sync | `word`, `platform` | none | `suggestions[]` | `platform` must be one of the documented vendor values |
+| `get_keyword_metrics_5118` | Keyword Search Volume Info v2 / `/keywordparam/v2` | `API_5118_KW_PARAM_V2` | Async | `keywords[]` | async control fields | `items[]` | Max 50 keywords; vendor uses `\|` delimiter; pending may return `101` |
 | `get_taobao_keywords_5118` | Taobao Long-tail Mining / `/keyword/taobao` | `API_5118_TAOBAO` | Sync | `keyword` | paging and sort options | `keywords[]` | Same family as other vertical keyword tools |
 | `get_jd_keywords_5118` | JD Long-tail Mining / `/keyword/jd` | `API_5118_JD` | Sync | `keyword` | paging and sort options | `keywords[]` | Same paging model as Taobao |
 | `get_pdd_keywords_5118` | Pinduoduo Long-tail Mining / `/keyword/pinduoduo` | `API_5118_PDD` | Sync | `keyword` | paging and sort options | `keywords[]` | Same paging model as Taobao |
 | `get_sm_keywords_5118` | Shenma Long-tail Mining / `/keyword/sm/word` | `API_5118_SM` | Sync | `keyword` | paging and sort options | `keywords[]` | Search vertical for Shenma |
 | `get_google_keywords_5118` | Google Long-tail Mining / `/keyword/google` | `API_5118_GOOGLE` | Sync | `keyword` | paging and sort options | `keywords[]` | Search vertical for Google |
 | `get_amazon_keywords_5118` | Amazon Long-tail Mining / `/keyword/amazon` | `API_5118_AMAZON` | Sync | `keyword` | paging and sort options | `keywords[]` | Search vertical for Amazon |
-| `get_mobile_traffic_keywords_5118` | Mobile Traffic Keyword Mining / `/traffic` | `API_KEY` | Async | `keyword` | async control fields, paging | `keywords[]` | Long-running task; second step requires both `taskId` and `keyword` |
+| `get_mobile_traffic_keywords_5118` | Mobile Traffic Keyword Mining / `/traffic` | `API_5118_TRAFFIC` | Async | `keyword` | async control fields, paging | `keywords[]` | Long-running task; second step requires both `taskId` and `keyword` |
 
 ### Ranking Keyword Exports
 

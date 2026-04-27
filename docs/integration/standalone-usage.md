@@ -16,9 +16,13 @@ The current implementation includes exactly five tools:
 
 ## Environment Variables
 
-Set one shared API key for all currently implemented tools:
+Set one API key env var per currently implemented tool:
 
-- `API_KEY`
+- `API_5118_LONGTAIL_V2`
+- `API_5118_FREQ_WORDS`
+- `API_5118_SUGGEST`
+- `API_5118_KW_PARAM_V2`
+- `API_5118_TRAFFIC`
 
 ## Build and Run
 
@@ -26,32 +30,6 @@ Set one shared API key for all currently implemented tools:
 npm install
 npm run build
 node dist/index.js
-```
-
-## Live Runner and Debugging
-
-The repository now includes a runnable live test script:
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live
-```
-
-Run a specific tool with verbose output:
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live -- --tool suggest --word "比特币" --platform baidu --verbose
-```
-
-Run the wave-one scenario from the bundled sequence file:
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live -- --scenario wave-one
-```
-
-Start with Node inspector for step-by-step debugging:
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live:debug -- --tool metrics --keywords "比特币价格,比特币是什么" --executionMode wait
 ```
 
 ## Stdio Transport Example

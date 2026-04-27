@@ -16,9 +16,13 @@
 
 ## 环境变量
 
-当前实现的 5 个工具共用一个 API key：
+当前实现的 5 个工具分别使用独立的 API key 环境变量：
 
-- `API_KEY`
+- `API_5118_LONGTAIL_V2`
+- `API_5118_FREQ_WORDS`
+- `API_5118_SUGGEST`
+- `API_5118_KW_PARAM_V2`
+- `API_5118_TRAFFIC`
 
 ## 构建与启动
 
@@ -26,32 +30,6 @@
 npm install
 npm run build
 node dist/index.js
-```
-
-## 真实调用与调试
-
-仓库现已包含可直接运行的真实调用脚本：
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live
-```
-
-指定单个工具并输出详细结果：
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live -- --tool suggest --word "比特币" --platform baidu --verbose
-```
-
-按内置序列执行 wave-one 场景：
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live -- --scenario wave-one
-```
-
-使用 Node 调试器逐步调试：
-
-```bash
-API_KEY="your-5118-api-key" npm run test:live:debug -- --tool metrics --keywords "比特币价格,比特币是什么" --executionMode wait
 ```
 
 ## Stdio 配置示例

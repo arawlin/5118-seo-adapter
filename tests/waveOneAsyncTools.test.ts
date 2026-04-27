@@ -7,7 +7,8 @@ import { jsonResponse, readFixture } from "./testUtils.js";
 const ENV_SNAPSHOT = { ...process.env };
 
 function applyTestApiEnv(): void {
-  process.env.API_KEY = "k-wave-one";
+  process.env.API_5118_KW_PARAM_V2 = "k-kw-param";
+  process.env.API_5118_TRAFFIC = "k-traffic";
 }
 
 describe("async tools", () => {
