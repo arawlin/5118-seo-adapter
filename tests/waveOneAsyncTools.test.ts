@@ -37,6 +37,30 @@ describe("async tools", () => {
     expect(result.taskId).toBe(40724567);
   });
 
+  it("treats submit success with taskid as pending when data is not ready", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          errcode: "0",
+          errmsg: "",
+          data: {
+            taskid: 40724567,
+          },
+        }),
+      ),
+    );
+
+    const result = await getKeywordMetrics5118Handler({
+      keywords: ["NBA"],
+      executionMode: "submit",
+    });
+
+    expect(result.executionStatus).toBe("pending");
+    expect(result.taskId).toBe(40724567);
+    expect(result.data).toBeNull();
+  });
+
   it("completes keyword metrics in wait mode", async () => {
     const pendingFixture = await readFixture<Record<string, unknown>>(
       "keyword-metrics.pending.json",

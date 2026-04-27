@@ -1,15 +1,18 @@
 {
   "errcode": "0",
   "errmsg": "success",
-  "data": [
-    {
-      "keyword": "%E6%AF%94%E7%89%B9%E5%B8%81%E4%BB%B7%E6%A0%BC",
-      "index": "12000",
-      "mobile_index": "9800",
-      "long_keyword_count": "320",
-      "bid_company_count": "12",
-      "cpc": "6.5",
-      "competition": "0.48"
-    }
-  ]
+  "data": {
+    "taskid": 40724567,
+    "keyword_param": [
+      {
+        "keyword": "%E6%AF%94%E7%89%B9%E5%B8%81%E4%BB%B7%E6%A0%BC",
+        "index": "12000",
+        "mobile_index": "9800",
+        "long_keyword_count": "320",
+        "bidword_company_count": "12",
+        "bidword_price": "6.5",
+        "bidword_kwc": "1"
+      }
+    ]
+  }
 }

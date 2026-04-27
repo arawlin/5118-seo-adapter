@@ -51,7 +51,13 @@ export interface MobileTrafficKeywordsData {
 export function normalizeKeywordMetricsResponse(raw: unknown): KeywordMetricsData {
   const root = asRecord(raw);
   const data = root.data;
-  const list = asArray(data).length > 0 ? asArray(data) : asArray(asRecord(data).list);
+  const dataRecord = asRecord(data);
+  const list =
+    asArray(data).length > 0
+      ? asArray(data)
+      : asArray(dataRecord.keyword_param).length > 0
+        ? asArray(dataRecord.keyword_param)
+        : asArray(dataRecord.list);
 
   return {
     items: list.map((item) => {
@@ -61,9 +67,11 @@ export function normalizeKeywordMetricsResponse(raw: unknown): KeywordMetricsDat
         index: toNumber(record.index),
         mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
         longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
-        bidCompanyCount: toNumber(record.bid_company_count ?? record.bidCompanyCount),
-        cpc: toNumber(record.cpc ?? record.bid_price ?? record.bidPrice),
-        competition: toNumber(record.competition ?? record.compete),
+          bidCompanyCount: toNumber(
+            record.bidword_company_count ?? record.bid_company_count ?? record.bidCompanyCount,
+          ),
+          cpc: toNumber(record.bidword_price ?? record.cpc ?? record.bid_price ?? record.bidPrice),
+          competition: toNumber(record.bidword_kwc ?? record.competition ?? record.compete),
       };
     }),
   };

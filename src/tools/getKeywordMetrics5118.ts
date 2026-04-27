@@ -1,7 +1,6 @@
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import {
   DEFAULT_KEYWORD_METRICS_MAX_WAIT_SECONDS,
-  DEFAULT_POLL_INTERVAL_SECONDS,
   executeAsyncTool,
 } from "../lib/asyncExecutor.js";
 import { ToolError } from "../lib/errorMapper.js";
@@ -20,21 +19,66 @@ export interface GetKeywordMetricsInput extends AsyncControlInput {
 const TOOL_NAME = "get_keyword_metrics_5118";
 const API_NAME = "Keyword Search Volume Info API v2";
 const ENDPOINT = "/keywordparam/v2";
+const DEFAULT_KEYWORD_METRICS_POLL_INTERVAL_SECONDS = 60;
+
+interface KeywordMetricsResponseMeta {
+  taskId?: string | number;
+  dataReady: boolean;
+}
+
+function extractTaskIdFromRoot(root: Record<string, unknown>): string | number | undefined {
+  return (
+    (root.taskid as string | number | undefined) ??
+    (root.taskId as string | number | undefined) ??
+    ((root.data as Record<string, unknown> | undefined)?.taskid as string | number | undefined)
+  );
+}
+
+function resolveKeywordMetricsMeta(raw: unknown): KeywordMetricsResponseMeta {
+  if (!raw || typeof raw !== "object") {
+    return { dataReady: false };
+  }
+
+  const root = raw as Record<string, unknown>;
+  const data = root.data;
+  const taskId = extractTaskIdFromRoot(root);
+
+  if (Array.isArray(data)) {
+    return { taskId, dataReady: data.length > 0 };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { taskId, dataReady: false };
+  }
+
+  const record = data as Record<string, unknown>;
+  const dataReady =
+    (Array.isArray(record.keyword_param) && record.keyword_param.length > 0) ||
+    (Array.isArray(record.list) && record.list.length > 0);
+
+  return { taskId, dataReady };
+}
+
+function isKeywordMetricsDataReady(raw: unknown): boolean {
+  return resolveKeywordMetricsMeta(raw).dataReady;
+}
+
+function isPendingSubmitSuccess(raw: unknown): boolean {
+  const meta = resolveKeywordMetricsMeta(raw);
+
+  if (meta.taskId === undefined || meta.taskId === null) {
+    return false;
+  }
+
+  return meta.dataReady === false;
+}
 
 function extractTaskId(raw: unknown): string | number | undefined {
   if (!raw || typeof raw !== "object") {
     return undefined;
   }
 
-  const root = raw as Record<string, unknown>;
-  return (
-    (root.taskid as string | number | undefined) ??
-    (root.taskId as string | number | undefined) ??
-    ((root.data as Record<string, unknown> | undefined)?.taskid as
-      | string
-      | number
-      | undefined)
-  );
+  return extractTaskIdFromRoot(raw as Record<string, unknown>);
 }
 
 export async function getKeywordMetrics5118Handler(
@@ -78,8 +122,9 @@ export async function getKeywordMetrics5118Handler(
     maxWaitSeconds: input.maxWaitSeconds,
     pollIntervalSeconds: input.pollIntervalSeconds,
     defaultMaxWaitSeconds: DEFAULT_KEYWORD_METRICS_MAX_WAIT_SECONDS,
-    defaultPollIntervalSeconds: DEFAULT_POLL_INTERVAL_SECONDS,
-    pendingCodes: ["101", "200104"],
+    defaultPollIntervalSeconds: DEFAULT_KEYWORD_METRICS_POLL_INTERVAL_SECONDS,
+    pendingCodes: ["101"],
+    isPendingResult: isPendingSubmitSuccess,
     submit,
     poll,
     extractTaskId,
