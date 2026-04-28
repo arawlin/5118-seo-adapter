@@ -6,11 +6,9 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import {
-  normalizeKeywordMetricsResponse,
-  type KeywordMetricsData,
-} from "../normalizers/keywordMetrics.js";
+import { normalizeKeywordMetricsResponse } from "../normalizers/keywordMetrics.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
+import type { KeywordMetricsData } from "../types/toolDataContracts.js";
 
 export interface GetKeywordMetricsInput extends AsyncControlInput {
   keywords?: string[];

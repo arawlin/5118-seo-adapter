@@ -1,5 +1,9 @@
 import { createPagination } from "../lib/responseEnvelope.js";
 import type { PaginationInfo } from "../types/toolContracts.js";
+import type {
+  KeywordMetricsData,
+  MobileTrafficKeywordsData,
+} from "../types/toolDataContracts.js";
 
 function toNumber(value: unknown): number | null {
   if (value === undefined || value === null || value === "") {
@@ -8,6 +12,15 @@ function toNumber(value: unknown): number | null {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toStringOrNull(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const text = String(value);
+  return text.length > 0 ? text : null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -20,32 +33,6 @@ function asArray(value: unknown): unknown[] {
   }
 
   return [];
-}
-
-export interface KeywordMetricsItem {
-  keyword: string | null;
-  index: number | null;
-  mobileIndex: number | null;
-  longKeywordCount: number | null;
-  bidCompanyCount: number | null;
-  cpc: number | null;
-  competition: number | null;
-}
-
-export interface KeywordMetricsData {
-  items: KeywordMetricsItem[];
-}
-
-export interface MobileTrafficKeywordItem {
-  keyword: string | null;
-  index: number | null;
-  rank: number | null;
-  url: string | null;
-}
-
-export interface MobileTrafficKeywordsData {
-  keywords: MobileTrafficKeywordItem[];
-  pagination: PaginationInfo | null;
 }
 
 export function normalizeKeywordMetricsResponse(raw: unknown): KeywordMetricsData {
@@ -63,15 +50,43 @@ export function normalizeKeywordMetricsResponse(raw: unknown): KeywordMetricsDat
     items: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: String(record.keyword ?? record.word ?? "") || null,
+        keyword: toStringOrNull(record.keyword ?? record.word),
         index: toNumber(record.index),
         mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
+        haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
+        douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
+        toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
+        googleIndex: toNumber(record.google_index ?? record.googleIndex),
+        kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
+        weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
         longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
-          bidCompanyCount: toNumber(
-            record.bidword_company_count ?? record.bid_company_count ?? record.bidCompanyCount,
-          ),
-          cpc: toNumber(record.bidword_price ?? record.cpc ?? record.bid_price ?? record.bidPrice),
-          competition: toNumber(record.bidword_kwc ?? record.competition ?? record.compete),
+        bidCompanyCount: toNumber(
+          record.bidword_company_count ?? record.bid_company_count ?? record.bidCompanyCount,
+        ),
+        cpc: toNumber(record.bidword_price ?? record.cpc ?? record.bid_price ?? record.bidPrice),
+        competition: toNumber(record.bidword_kwc ?? record.competition ?? record.compete),
+        pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pc_pv ?? record.pcSearchVolume),
+        mobileSearchVolume: toNumber(
+          record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
+        ),
+        recommendedBidMin: toNumber(
+          record.bidword_recommendprice_min ?? record.recommended_bid_min ?? record.recommendedBidMin,
+        ),
+        recommendedBidMax: toNumber(
+          record.bidword_recommendprice_max ?? record.recommended_bid_max ?? record.recommendedBidMax,
+        ),
+        recommendedBidAvg: toNumber(
+          record.bidword_recommend_price_avg ??
+            record.recommended_bid_avg ??
+            record.recommendedBidAvg,
+        ),
+        ageBest: toStringOrNull(record.age_best ?? record.ageBest),
+        ageBestValue: toNumber(record.age_best_value ?? record.ageBestValue),
+        sexMale: toNumber(record.sex_male ?? record.sexMale),
+        sexFemale: toNumber(record.sex_female ?? record.sexFemale),
+        bidReason: toStringOrNull(
+          record.bidword_showreasons ?? record.bidReason ?? record.sem_reason,
+        ),
       };
     }),
   };
@@ -95,10 +110,15 @@ export function normalizeMobileTrafficKeywordsResponse(
     keywords: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: String(record.keyword ?? record.word ?? "") || null,
+        keyword: toStringOrNull(record.keyword ?? record.word),
         index: toNumber(record.index),
         rank: toNumber(record.rank ?? record.position),
-        url: String(record.url ?? "") || null,
+        url: toStringOrNull(record.url),
+        weight: toNumber(record.weight),
+        mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
+        mobileSearchVolume: toNumber(
+          record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
+        ),
       };
     }),
     pagination,

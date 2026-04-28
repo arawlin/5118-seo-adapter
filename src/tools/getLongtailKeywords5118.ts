@@ -3,11 +3,9 @@ import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import {
-  normalizeLongtailKeywordsResponse,
-  type LongtailKeywordsData,
-} from "../normalizers/keywordDiscovery.js";
+import { normalizeLongtailKeywordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import type { LongtailKeywordsData } from "../types/toolDataContracts.js";
 
 export interface GetLongtailKeywordsInput {
   keyword: string;

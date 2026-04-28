@@ -12,6 +12,23 @@ import {
 
 export const REGISTERED_TOOL_NAMES = API_TOOL_NAMES;
 
+function joinDescription(...parts: string[]) {
+  return parts.join(" ");
+}
+
+function jsonExample(label: string, value: unknown) {
+  return `${label}: ${JSON.stringify(value)}.`;
+}
+
+const COMMON_RESPONSE_FIELDS_DESCRIPTION =
+  "Top-level response fields: source=upstream provider name; sourceType=adapter source classification; tool=MCP tool name; apiName=official 5118 API name; endpoint=official endpoint path; mode=sync or async; executionStatus=completed, pending, or failed; taskId=vendor async task id or null; pagination=normalized page info or null; warnings=non-fatal notices; raw=original vendor payload kept for debugging.";
+
+const COMMON_PAGINATION_FIELDS_DESCRIPTION =
+  "Pagination fields: pageIndex=current 1-based page number; pageSize=result count per page; pageCount=total number of pages; total=total number of matching rows.";
+
+const ASYNC_RESPONSE_STATE_DESCRIPTION =
+  "Async state rule: data=null while executionStatus=pending; completed tasks return normalized data; failed tasks surface executionStatus=failed plus warnings or raw vendor details.";
+
 function toToolResult(payload: unknown) {
   const structuredContent = payload as Record<string, unknown>;
 
@@ -36,15 +53,72 @@ export function createServer(): McpServer {
     "get_longtail_keywords_5118",
     {
       title: "Get Longtail Keywords 5118",
-      description: "Fetch longtail keywords from 5118 /keyword/word/v2.",
+      description: joinDescription(
+        "Sync long-tail keyword mining via 5118 /keyword/word/v2.",
+        "Input fields: keyword=seed keyword to expand; pageIndex=1-based result page; pageSize=result count per page, maximum 100; sortField=vendor sort selector; sortType=sort direction for sortField; filter=vendor quick filter selector; filterDate=optional yyyy-MM-dd snapshot date.",
+        jsonExample("Example input JSON", { keyword: "衬衫", pageIndex: 1, pageSize: 20 }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        "Normalized data fields: data.keywords[]=long-tail rows where keyword=long-tail keyword text; index=PC search index; mobileIndex=mobile search index; haosouIndex=360 search index; douyinIndex=Douyin search index; toutiaoIndex=Toutiao search index; googleIndex=Google search index; kuaishouIndex=Kuaishou search index; weiboIndex=Weibo search index; longKeywordCount=number of related long-tail keywords; bidCompanyCount=number of advertisers bidding on the term; pageUrl=sample ranking page URL; competition=SEO competition score; pcSearchVolume=estimated PC search volume; mobileSearchVolume=estimated mobile search volume; semReason=vendor bidding suggestion reason; semPrice=reference bid price text; semRecommendPriceAvg=average recommended bid price.",
+        jsonExample("Example normalized data", {
+          keywords: [{
+            keyword: "衬衫",
+            index: 1063,
+            mobileIndex: 919,
+            haosouIndex: 1163,
+            douyinIndex: 89,
+            toutiaoIndex: 256,
+            longKeywordCount: 6045520,
+            bidCompanyCount: 185,
+            pageUrl: "https://example.com/shirt",
+            competition: 1,
+            pcSearchVolume: 240,
+            mobileSearchVolume: 1433,
+            semReason: "High-frequency keyword",
+            semPrice: "0.35~4.57",
+            semRecommendPriceAvg: 3.25,
+            googleIndex: 12100,
+            kuaishouIndex: 580,
+            weiboIndex: 320,
+          }],
+          pagination: { pageIndex: 1, pageSize: 20, pageCount: 18, total: 52 },
+        }),
+        "The top-level pagination field and data.pagination describe the same page window.",
+        COMMON_PAGINATION_FIELDS_DESCRIPTION,
+      ),
       inputSchema: {
-        keyword: z.string().min(1),
-        pageIndex: z.number().int().positive().optional(),
-        pageSize: z.number().int().positive().max(100).optional(),
-        sortField: z.string().optional(),
-        sortType: z.enum(["asc", "desc"]).optional(),
-        filter: z.string().optional(),
-        filterDate: z.string().optional(),
+        keyword: z
+          .string()
+          .min(1)
+          .describe("Required seed keyword. This is the root term that 5118 expands into long-tail keywords."),
+        pageIndex: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Optional 1-based result page number. Use it to read a later page of normalized keywords. Defaults to 1."),
+        pageSize: z
+          .number()
+          .int()
+          .positive()
+          .max(100)
+          .optional()
+          .describe("Optional number of rows per page. Maximum 100. Larger values return more keywords per request."),
+        sortField: z
+          .string()
+          .optional()
+          .describe("Optional vendor sort selector. Common values: 2=bidCompanyCount advertiser count, 3=longKeywordCount long-tail count, 4=index PC search index, 5=mobileIndex mobile search index."),
+        sortType: z
+          .enum(["asc", "desc"])
+          .optional()
+          .describe("Optional sort direction for sortField. asc=low to high, desc=high to low."),
+        filter: z
+          .string()
+          .optional()
+          .describe("Optional vendor quick filter selector. Common values: 1=all results, 2=traffic words, 9=keywords with bidding ads."),
+        filterDate: z
+          .string()
+          .optional()
+          .describe("Optional vendor filter date in yyyy-MM-dd format. Use it when you need a specific date snapshot supported by 5118."),
       },
     },
     async (input) => toToolResult(await getLongtailKeywords5118Handler(input)),
@@ -54,9 +128,21 @@ export function createServer(): McpServer {
     "get_industry_frequency_words_5118",
     {
       title: "Get Industry Frequency Words 5118",
-      description: "Fetch industry frequency words from 5118 /tradeseg.",
+      description: joinDescription(
+        "Sync industry frequency analysis via 5118 /tradeseg.",
+        "Input fields: keyword=industry or topic seed term.",
+        jsonExample("Example input JSON", { keyword: "减肥餐" }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        "Normalized data fields: data.frequencyWords[]=industry word rows where word=returned term; ratio=share of occurrences inside the returned set; count=raw occurrence count reported by 5118 for that term.",
+        jsonExample("Example normalized data", {
+          frequencyWords: [{ word: "做法", ratio: 5.58, count: 46826 }],
+        }),
+      ),
       inputSchema: {
-        keyword: z.string().min(1),
+        keyword: z
+          .string()
+          .min(1)
+          .describe("Required industry or topic seed keyword. 5118 uses it to calculate frequently co-occurring industry words."),
       },
     },
     async (input) => toToolResult(await getIndustryFrequencyWords5118Handler(input)),
@@ -66,10 +152,30 @@ export function createServer(): McpServer {
     "get_suggest_terms_5118",
     {
       title: "Get Suggest Terms 5118",
-      description: "Fetch suggestion terms from 5118 /suggest/list.",
+      description: joinDescription(
+        "Sync suggestion mining via 5118 /suggest/list.",
+        "Input fields: word=seed word to expand; platform=required vendor platform enum that decides the suggestion source.",
+        jsonExample("Example input JSON", { word: "国庆假期", platform: "zhihu" }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        "Normalized data fields: data.suggestions[]=suggestion rows where term=returned suggestion term; sourceWord=original seed word echoed by the vendor; promotedTerm=vendor promoted or highlighted related term when present; platform=platform that produced the suggestion; addTime=vendor timestamp string when present.",
+        jsonExample("Example normalized data", {
+          suggestions: [{
+            term: "国庆假期去哪玩",
+            sourceWord: "国庆假期",
+            promotedTerm: "国庆假期去哪玩",
+            platform: "zhihu",
+            addTime: "2022-09-24T11:28:10.027",
+          }],
+        }),
+      ),
       inputSchema: {
-        word: z.string().min(1),
-        platform: z.enum(SUGGEST_PLATFORM_VALUES),
+        word: z
+          .string()
+          .min(1)
+          .describe("Required seed word used to query related suggestion terms from the selected platform."),
+        platform: z
+          .enum(SUGGEST_PLATFORM_VALUES)
+          .describe("Required official vendor platform enum. Examples include baidu, baidumobile, zhihu, douyin, and amazon. The platform changes the suggestion corpus."),
       },
     },
     async (input) => toToolResult(await getSuggestTerms5118Handler(input)),
@@ -79,38 +185,77 @@ export function createServer(): McpServer {
     "get_keyword_metrics_5118",
     {
       title: "Get Keyword Metrics 5118",
-      description:
-        "Two-phase async keyword metrics query via 5118 /keywordparam/v2. " +
-        "Usage: (1) submit with keywords to obtain taskId, " +
-        "(2) poll with taskId to fetch latest status/result, " +
-        "(3) wait to submit and auto-poll until completion or timeout. " +
-        "Response envelope: pending returns executionStatus=pending with taskId and data=null; completed returns executionStatus=completed with data.items[]. " +
-        "Each normalized item may include keyword, index, mobileIndex, longKeywordCount, bidCompanyCount, cpc, and competition. " +
-        "Additional official vendor fields remain available under raw.data.keyword_param[].",
+      description: joinDescription(
+        "Async keyword metrics via 5118 /keywordparam/v2.",
+        "Input fields: keywords=keyword list for submit or wait; executionMode=submit, poll, or wait; taskId=existing vendor task id for poll or resumed wait; maxWaitSeconds=client-side wait timeout; pollIntervalSeconds=client-side polling interval.",
+        jsonExample("Example submit input JSON", { keywords: ["比特币价格"], executionMode: "submit" }),
+        jsonExample("Example poll input JSON", { taskId: 40724567, executionMode: "poll" }),
+        jsonExample("Example wait input JSON", {
+          keywords: ["比特币价格"],
+          executionMode: "wait",
+          maxWaitSeconds: 120,
+          pollIntervalSeconds: 60,
+        }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        ASYNC_RESPONSE_STATE_DESCRIPTION,
+        jsonExample("Example pending envelope", {
+          executionStatus: "pending",
+          taskId: 40724567,
+          data: null,
+        }),
+        "Normalized data fields: data.items[]=keyword metric rows where keyword=keyword text; index=PC search index; mobileIndex=mobile search index; haosouIndex=360 search index; douyinIndex=Douyin search index; toutiaoIndex=Toutiao search index; googleIndex=Google search index; kuaishouIndex=Kuaishou search index; weiboIndex=Weibo search index; longKeywordCount=related long-tail keyword count; bidCompanyCount=advertiser count; cpc=estimated cost per click; competition=ad competition score; pcSearchVolume=estimated PC search volume; mobileSearchVolume=estimated mobile search volume; recommendedBidMin=minimum recommended bid; recommendedBidMax=maximum recommended bid; recommendedBidAvg=average recommended bid; ageBest=best matching age group label; ageBestValue=score for the best age group; sexMale=male audience ratio or score; sexFemale=female audience ratio or score; bidReason=vendor bidding recommendation reason.",
+        jsonExample("Example completed data", {
+          items: [{
+            keyword: "比特币价格",
+            index: 12000,
+            mobileIndex: 9800,
+            haosouIndex: 351,
+            douyinIndex: 564,
+            toutiaoIndex: 14,
+            googleIndex: 0,
+            kuaishouIndex: 0,
+            weiboIndex: 0,
+            longKeywordCount: 320,
+            bidCompanyCount: 12,
+            cpc: 6.5,
+            competition: 1,
+            pcSearchVolume: 258,
+            mobileSearchVolume: 372,
+            recommendedBidMin: 0,
+            recommendedBidMax: 10.16,
+            recommendedBidAvg: 4.54,
+            ageBest: "20-29",
+            ageBestValue: 54.99,
+            sexMale: 48.71,
+            sexFemale: 51.29,
+            bidReason: "高频热搜词",
+          }],
+        }),
+      ),
       inputSchema: {
         keywords: z
           .array(z.string().min(1))
           .max(50)
           .optional()
-          .describe("Keywords to query. Required for submit and for wait without taskId. Max 50."),
+          .describe("Optional keyword list to submit to 5118. Required for submit mode, and also required for wait mode when taskId is not provided. Maximum 50 keywords per task."),
         executionMode: z
           .enum(["submit", "poll", "wait"])
           .optional()
-          .describe("Async execution mode. submit returns taskId, poll queries by taskId, wait auto-polls."),
+          .describe("Optional async execution mode. submit=create a vendor task and return taskId; poll=query an existing task by taskId; wait=submit or resume a task and keep polling until completion or timeout."),
         taskId: z
           .union([z.string(), z.number()])
           .optional()
-          .describe("Existing async task identifier. Required in poll mode."),
+          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling an already-created task."),
         maxWaitSeconds: z
           .number()
           .positive()
           .optional()
-          .describe("Maximum wait duration in seconds for wait mode before timeout."),
+          .describe("Optional maximum client-side wait time in seconds for wait mode. The tool stops polling and returns the latest pending state when this limit is reached."),
         pollIntervalSeconds: z
           .number()
           .positive()
           .optional()
-          .describe("Polling interval in seconds for wait mode. Defaults to 60 seconds if omitted."),
+          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds when omitted."),
       },
     },
     async (input) => toToolResult(await getKeywordMetrics5118Handler(input)),
@@ -120,15 +265,77 @@ export function createServer(): McpServer {
     "get_mobile_traffic_keywords_5118",
     {
       title: "Get Mobile Traffic Keywords 5118",
-      description: "Fetch async mobile traffic keywords from 5118 /traffic.",
+      description: joinDescription(
+        "Async mobile traffic keyword mining via 5118 /traffic.",
+        "Input fields: keyword=seed term used by the vendor for submit and poll; pageIndex=1-based result page for completed data; pageSize=completed result page size; executionMode=submit, poll, or wait; taskId=existing vendor task id; maxWaitSeconds=client-side wait timeout; pollIntervalSeconds=client-side polling interval.",
+        jsonExample("Example submit input JSON", { keyword: "比特币", executionMode: "submit" }),
+        jsonExample("Example poll input JSON", { keyword: "比特币", taskId: 50724567, executionMode: "poll" }),
+        jsonExample("Example wait input JSON", {
+          keyword: "比特币",
+          executionMode: "wait",
+          maxWaitSeconds: 180,
+          pollIntervalSeconds: 60,
+        }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        ASYNC_RESPONSE_STATE_DESCRIPTION,
+        jsonExample("Example pending envelope", {
+          executionStatus: "pending",
+          taskId: 50724567,
+          data: null,
+        }),
+        "Normalized data fields: data.keywords[]=traffic keyword rows where keyword=returned traffic keyword text; index=PC search index; rank=ranking position reported by 5118; url=ranking page URL; weight=5118 page weight score; mobileIndex=mobile search index; mobileSearchVolume=estimated mobile search volume.",
+        jsonExample("Example completed data", {
+          keywords: [{
+            keyword: "比特币行情",
+            index: 8800,
+            rank: 3,
+            url: "https://example.com/btc",
+            weight: 85,
+            mobileIndex: 230,
+            mobileSearchVolume: 340,
+          }],
+          pagination: { pageIndex: 1, pageSize: 20, pageCount: 1, total: 1 },
+        }),
+        "The top-level pagination field and data.pagination describe the same completed result page window.",
+        COMMON_PAGINATION_FIELDS_DESCRIPTION,
+      ),
       inputSchema: {
-        keyword: z.string().min(1).optional(),
-        pageIndex: z.number().int().positive().optional(),
-        pageSize: z.number().int().positive().max(500).optional(),
-        executionMode: z.enum(["submit", "poll", "wait"]).optional(),
-        taskId: z.union([z.string(), z.number()]).optional(),
-        maxWaitSeconds: z.number().positive().optional(),
-        pollIntervalSeconds: z.number().positive().optional(),
+        keyword: z
+          .string()
+          .min(1)
+          .optional()
+          .describe("Optional seed keyword to mine. Required for submit mode, and also required for poll mode because the upstream 5118 poll request still expects the original keyword."),
+        pageIndex: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Optional 1-based page number for completed traffic keyword results. Defaults to 1."),
+        pageSize: z
+          .number()
+          .int()
+          .positive()
+          .max(500)
+          .optional()
+          .describe("Optional completed result page size. Maximum 500. Defaults to 20."),
+        executionMode: z
+          .enum(["submit", "poll", "wait"])
+          .optional()
+          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout. Defaults to submit for this long-running API."),
+        taskId: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+        maxWaitSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Optional maximum client-side wait time in seconds for wait mode before timeout. The tool returns the latest pending state if the limit is reached first."),
+        pollIntervalSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Optional polling interval in seconds for wait mode. Defaults to the shared async poll interval when omitted."),
       },
     },
     async (input) => toToolResult(await getMobileTrafficKeywords5118Handler(input)),

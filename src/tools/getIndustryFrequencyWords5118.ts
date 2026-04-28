@@ -3,11 +3,9 @@ import { getErrcode, map5118Error } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import {
-  normalizeIndustryFrequencyWordsResponse,
-  type FrequencyWordsData,
-} from "../normalizers/keywordDiscovery.js";
+import { normalizeIndustryFrequencyWordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import type { FrequencyWordsData } from "../types/toolDataContracts.js";
 
 export interface GetIndustryFrequencyWordsInput {
   keyword: string;

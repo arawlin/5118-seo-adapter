@@ -6,12 +6,10 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import {
-  normalizeMobileTrafficKeywordsResponse,
-  type MobileTrafficKeywordsData,
-} from "../normalizers/keywordMetrics.js";
+import { normalizeMobileTrafficKeywordsResponse } from "../normalizers/keywordMetrics.js";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
+import type { MobileTrafficKeywordsData } from "../types/toolDataContracts.js";
 
 export interface GetMobileTrafficKeywordsInput extends AsyncControlInput {
   keyword?: string;
