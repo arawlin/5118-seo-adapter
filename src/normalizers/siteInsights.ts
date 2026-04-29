@@ -1,10 +1,14 @@
 import { createPagination } from "../lib/responseEnvelope.js";
 import type {
+  BidSitesData,
   BidKeywordsData,
   DomainRankKeywordsData,
   RankSnapshotData,
+  SiteRankKeywordsData,
   SiteWeightData,
+  TopSiteSnapshotsData,
   UrlIndexingData,
+  RankSnapshotResultItem,
 } from "../types/toolDataContracts.js";
 
 function toNumber(value: unknown): number | null {
@@ -35,6 +39,77 @@ function asArray(value: unknown): unknown[] {
   }
 
   return [];
+}
+
+function firstArray(data: Record<string, unknown>, keys: string[]): unknown[] {
+  for (const key of keys) {
+    const value = asArray(data[key]);
+    if (value.length > 0) {
+      return value;
+    }
+  }
+
+  return [];
+}
+
+function normalizeRankResultItem(rankItem: unknown): RankSnapshotResultItem {
+  const rankRecord = asRecord(rankItem);
+  return {
+    siteUrl: toStringOrNull(rankRecord.site_url ?? rankRecord.siteUrl),
+    rank: toNumber(rankRecord.rank),
+    pageTitle: toStringOrNull(rankRecord.page_title ?? rankRecord.pageTitle),
+    pageUrl: toStringOrNull(rankRecord.page_url ?? rankRecord.pageUrl),
+    top100: toNumber(rankRecord.top100),
+    siteWeight: toStringOrNull(rankRecord.site_weight ?? rankRecord.siteWeight),
+  };
+}
+
+function normalizeSiteRankKeywordRecord(item: unknown) {
+  const record = asRecord(item);
+  return {
+    keyword: toStringOrNull(record.keyword ?? record.word),
+    rank: toNumber(record.rank),
+    pageTitle: toStringOrNull(record.page_title ?? record.pageTitle),
+    pageUrl: toStringOrNull(record.page_url ?? record.pageUrl ?? record.url),
+    bidCompanyCount: toNumber(
+      record.bidword_companycount ?? record.bidword_company_count ?? record.bidCompanyCount,
+    ),
+    longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
+    index: toNumber(record.index),
+    mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
+    haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
+    douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
+    toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
+    competition: toNumber(record.bidword_kwc ?? record.competition),
+    pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pcSearchVolume),
+    mobileSearchVolume: toNumber(record.bidword_wisepv ?? record.mobileSearchVolume),
+    semReason: toStringOrNull(record.sem_reason ?? record.semReason),
+    semPrice: toStringOrNull(record.sem_price ?? record.semPrice),
+    recommendedBidAvg: toNumber(
+      record.bidword_recommend_price_avg ?? record.recommendedBidAvg,
+    ),
+    googleIndex: toNumber(record.google_index ?? record.googleIndex),
+    kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
+    weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+  };
+}
+
+function normalizeSiteRankKeywordsByKeys(raw: unknown, keys: string[]): SiteRankKeywordsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = firstArray(data, [...keys, "list"]);
+
+  const pagination = createPagination(
+    data.page_index ?? data.pageIndex,
+    data.page_size ?? data.pageSize,
+    data.page_count ?? data.pageCount,
+    data.total,
+  );
+
+  return {
+    items: list.map((item) => normalizeSiteRankKeywordRecord(item)),
+    pagination,
+  };
 }
 
 export function normalizeDomainRankKeywordsResponse(raw: unknown): DomainRankKeywordsData {
@@ -76,6 +151,14 @@ export function normalizeDomainRankKeywordsResponse(raw: unknown): DomainRankKey
     }),
     pagination,
   };
+}
+
+export function normalizePcSiteRankKeywordsResponse(raw: unknown): SiteRankKeywordsData {
+  return normalizeSiteRankKeywordsByKeys(raw, ["baidupc", "pc"]);
+}
+
+export function normalizeMobileSiteRankKeywordsResponse(raw: unknown): SiteRankKeywordsData {
+  return normalizeSiteRankKeywordsByKeys(raw, ["baidumobile", "mobile"]);
 }
 
 export function normalizeBidKeywordsResponse(raw: unknown): BidKeywordsData {
@@ -122,6 +205,38 @@ export function normalizeBidKeywordsResponse(raw: unknown): BidKeywordsData {
   };
 }
 
+export function normalizeBidSitesResponse(raw: unknown): BidSitesData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = firstArray(data, ["keyword_bidsite", "items", "list"]);
+
+  const pagination = createPagination(
+    data.page_index ?? data.pageIndex,
+    data.page_size ?? data.pageSize,
+    data.page_count ?? data.pageCount,
+    data.total,
+  );
+
+  return {
+    items: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        title: toStringOrNull(record.title),
+        intro: toStringOrNull(record.intro),
+        siteTitle: toStringOrNull(record.urltitle ?? record.siteTitle),
+        siteUrl: toStringOrNull(record.url ?? record.siteUrl),
+        fullUrl: toStringOrNull(record.fullurl ?? record.fullUrl),
+        companyName: toStringOrNull(record.companyname ?? record.companyName),
+        baiduPcWeight: toStringOrNull(record.baidupcweight ?? record.baiduPcWeight),
+        bidCount: toNumber(record.bidCount ?? record.bid_count),
+        lastSeenAt: toStringOrNull(record.join_date ?? record.lastSeenAt),
+        firstSeenAt: toStringOrNull(record.firstfindtime ?? record.firstSeenAt),
+      };
+    }),
+    pagination,
+  };
+}
+
 export function normalizeSiteWeightResponse(raw: unknown): SiteWeightData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
@@ -162,17 +277,28 @@ export function normalizeRankSnapshotResponse(raw: unknown): RankSnapshotData {
         ip: toStringOrNull(record.ip),
         area: toStringOrNull(record.area),
         network: toStringOrNull(record.network),
-        ranks: ranks.map((rankItem) => {
-          const rankRecord = asRecord(rankItem);
-          return {
-            siteUrl: toStringOrNull(rankRecord.site_url ?? rankRecord.siteUrl),
-            rank: toNumber(rankRecord.rank),
-            pageTitle: toStringOrNull(rankRecord.page_title ?? rankRecord.pageTitle),
-            pageUrl: toStringOrNull(rankRecord.page_url ?? rankRecord.pageUrl),
-            top100: toNumber(rankRecord.top100),
-            siteWeight: toStringOrNull(rankRecord.site_weight ?? rankRecord.siteWeight),
-          };
-        }),
+        ranks: ranks.map((rankItem) => normalizeRankResultItem(rankItem)),
+      };
+    }),
+  };
+}
+
+export function normalizeTopSiteSnapshotsResponse(raw: unknown): TopSiteSnapshotsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = firstArray(data, ["keyword_monitor", "keywordMonitor", "keywordmonitor", "list"]);
+
+  return {
+    siteSnapshots: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        keyword: toStringOrNull(record.keyword ?? record.word),
+        searchEngine: toStringOrNull(record.search_engine ?? record.searchEngine),
+        ip: toStringOrNull(record.ip),
+        area: toStringOrNull(record.area),
+        network: toStringOrNull(record.network),
+        checkedAt: toStringOrNull(record.time ?? record.checkedAt),
+        ranks: asArray(record.ranks).map((rankItem) => normalizeRankResultItem(rankItem)),
       };
     }),
   };

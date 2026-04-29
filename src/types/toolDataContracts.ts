@@ -146,6 +146,41 @@ export interface DomainRankKeywordsData {
 export type GetDomainRankKeywords5118Item = DomainRankKeywordItem;
 export type GetDomainRankKeywords5118Data = DomainRankKeywordsData;
 
+/** Stable normalized item contract for get_pc_site_rank_keywords_5118 and get_mobile_site_rank_keywords_5118. */
+export interface SiteRankKeywordItem {
+  keyword: string | null;
+  rank: number | null;
+  pageTitle: string | null;
+  pageUrl: string | null;
+  bidCompanyCount: number | null;
+  longKeywordCount: number | null;
+  index: number | null;
+  mobileIndex: number | null;
+  haosouIndex: number | null;
+  douyinIndex: number | null;
+  toutiaoIndex: number | null;
+  competition: number | null;
+  pcSearchVolume: number | null;
+  mobileSearchVolume: number | null;
+  semReason: string | null;
+  semPrice: string | null;
+  recommendedBidAvg: number | null;
+  googleIndex: number | null;
+  kuaishouIndex: number | null;
+  weiboIndex: number | null;
+}
+
+/** Stable normalized data contract for site rank keyword export tools. */
+export interface SiteRankKeywordsData {
+  items: SiteRankKeywordItem[];
+  pagination: PaginationInfo | null;
+}
+
+export type GetPcSiteRankKeywords5118Item = SiteRankKeywordItem;
+export type GetPcSiteRankKeywords5118Data = SiteRankKeywordsData;
+export type GetMobileSiteRankKeywords5118Item = SiteRankKeywordItem;
+export type GetMobileSiteRankKeywords5118Data = SiteRankKeywordsData;
+
 /** Stable normalized item contract for get_bid_keywords_5118. */
 export interface BidKeywordItem {
   keyword: string | null;
@@ -176,6 +211,29 @@ export interface BidKeywordsData {
 
 export type GetBidKeywords5118Item = BidKeywordItem;
 export type GetBidKeywords5118Data = BidKeywordsData;
+
+/** Stable normalized item contract for get_bid_sites_5118. */
+export interface BidSiteItem {
+  title: string | null;
+  intro: string | null;
+  siteTitle: string | null;
+  siteUrl: string | null;
+  fullUrl: string | null;
+  companyName: string | null;
+  baiduPcWeight: string | null;
+  bidCount: number | null;
+  lastSeenAt: string | null;
+  firstSeenAt: string | null;
+}
+
+/** Stable normalized data contract for get_bid_sites_5118. */
+export interface BidSitesData {
+  items: BidSiteItem[];
+  pagination: PaginationInfo | null;
+}
+
+export type GetBidSites5118Item = BidSiteItem;
+export type GetBidSites5118Data = BidSitesData;
 
 /** Stable normalized item contract for get_site_weight_5118. */
 export interface SiteWeightItem {
@@ -222,6 +280,27 @@ export type GetPcRankSnapshot5118Data = RankSnapshotData;
 export type GetMobileRankSnapshot5118KeywordItem = RankSnapshotKeywordItem;
 export type GetMobileRankSnapshot5118RankItem = RankSnapshotResultItem;
 export type GetMobileRankSnapshot5118Data = RankSnapshotData;
+
+/** Stable normalized keyword contract for top-50 site snapshot tools. */
+export interface TopSiteSnapshotItem {
+  keyword: string | null;
+  searchEngine: string | null;
+  ip: string | null;
+  area: string | null;
+  network: string | null;
+  checkedAt: string | null;
+  ranks: RankSnapshotResultItem[];
+}
+
+/** Stable normalized data contract for top-50 site snapshot tools. */
+export interface TopSiteSnapshotsData {
+  siteSnapshots: TopSiteSnapshotItem[];
+}
+
+export type GetPcTop50Sites5118Item = TopSiteSnapshotItem;
+export type GetPcTop50Sites5118Data = TopSiteSnapshotsData;
+export type GetMobileTop50Sites5118Item = TopSiteSnapshotItem;
+export type GetMobileTop50Sites5118Data = TopSiteSnapshotsData;
 
 /** Stable normalized item contract for check_url_indexing_5118. */
 export interface UrlIndexingItem {

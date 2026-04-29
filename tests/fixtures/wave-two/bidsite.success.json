@@ -1,0 +1,24 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "total": 495,
+    "page_count": 1,
+    "page_index": 1,
+    "page_size": 20,
+    "keyword_bidsite": [
+      {
+        "title": "数据仪表,商业智能BI软件",
+        "intro": "竞价文案",
+        "urltitle": "网站标题",
+        "url": "sem.example.com",
+        "fullurl": "https://sem.example.com/landing",
+        "companyname": "示例科技有限公司",
+        "baidupcweight": "2",
+        "bidCount": 14,
+        "join_date": "2023-11-23T22:04:00",
+        "firstfindtime": "2020-12-22T22:03:00"
+      }
+    ]
+  }
+}

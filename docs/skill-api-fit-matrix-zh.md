@@ -46,11 +46,11 @@
 | `get_pc_rank_snapshot_5118` | 已实现 | Wave 1 | `/morerank/baidupc` | PC-排名查询 API（实时） | `url`; `keywords[]`; `checkRow?`; `executionMode?`; `taskId?` | `rankings[]`; `executionStatus`; `taskId` | `rank-tracker`; `serp-analysis`; `alert-manager` | [apistore](https://www.5118.com/apistore/detail/0d5b519e-d2a2-e711-b5b0-d4ae52d0f72c) |
 | `get_mobile_rank_snapshot_5118` | 已实现 | Wave 1 | `/morerank/baidumobile` | 移动-排名查询 API（实时） | `url`; `keywords[]`; `checkRow?`; `executionMode?`; `taskId?` | `rankings[]`; `executionStatus`; `taskId` | `rank-tracker`; `serp-analysis`; `alert-manager` | [apistore](https://www.5118.com/apistore/detail/9d211434-d3a2-e711-b5b0-d4ae52d0f72c) |
 | `check_url_indexing_5118` | 已实现 | Wave 1 | `/include` | PC-URL收录检测 API | `urls[]`; `executionMode?`; `taskId?`; `maxWaitSeconds?`; `pollIntervalSeconds?` | `items[]`; `executionStatus`; `taskId` | `technical-seo-checker`; `alert-manager`; `performance-reporter` | [apistore](https://www.5118.com/apistore/detail/f18cc2ae-8ea2-e711-b5b0-d4ae52d0f72c) |
-| `get_pc_site_rank_keywords_5118` | 待实现 | Wave 2 | `/keyword/pc/v2` | PC-网站排名词导出 API v2 | `url`; `pageIndex?` | `items[]`; `pagination` | `content-gap-analysis`; `competitor-analysis` | [apistore](https://www.5118.com/apistore/detail/8df3d6ed-2b12-ed11-8da8-e43d1a103141) |
-| `get_mobile_site_rank_keywords_5118` | 待实现 | Wave 2 | `/keyword/mobile/v2` | 移动-网站排名词导出 API v2 | `url`; `pageIndex?` | `items[]`; `pagination` | `content-gap-analysis`; `competitor-analysis` | [apistore](https://www.5118.com/apistore/detail/8ef3d6ed-2b12-ed11-8da8-e43d1a103141) |
-| `get_bid_sites_5118` | 待实现 | Wave 2 | `/bidsite` | 竞价推广公司挖掘 API | `keyword`; `pageIndex?`; `pageSize?` | `items[]`; `pagination` | `competitor-analysis` | [apistore](https://www.5118.com/apistore/detail/d1995837-e3e7-e811-80cd-1866da4dbcc0) |
-| `get_pc_top50_sites_5118` | 待实现 | Wave 2 | `/keywordrank/baidupc` | PC-前50网站信息 API | `keywords[]`; `checkRow?`; `executionMode?`; `taskId?` | `keywords[]`; `topSites[]`; `executionStatus` | `rank-tracker`; `serp-analysis` | [apistore](https://www.5118.com/apistore/detail/92d9a902-cca2-e711-b5b0-d4ae52d0f72c) |
-| `get_mobile_top50_sites_5118` | 待实现 | Wave 2 | `/keywordrank/baidumobile` | 移动-前50网站信息 API | `keywords[]`; `checkRow?`; `executionMode?`; `taskId?` | `keywords[]`; `topSites[]`; `executionStatus` | `rank-tracker`; `serp-analysis` | [apistore](https://www.5118.com/apistore/detail/f582d2b1-cea2-e711-b5b0-d4ae52d0f72c) |
+| `get_pc_site_rank_keywords_5118` | 已实现 | Wave 2 | `/keyword/pc/v2` | PC-网站排名词导出 API v2 | `url`; `pageIndex?` | `items[]`; `pagination` | `content-gap-analysis`; `competitor-analysis` | [apistore](https://www.5118.com/apistore/detail/8df3d6ed-2b12-ed11-8da8-e43d1a103141) |
+| `get_mobile_site_rank_keywords_5118` | 已实现 | Wave 2 | `/keyword/mobile/v2` | 移动-网站排名词导出 API v2 | `url`; `pageIndex?` | `items[]`; `pagination` | `content-gap-analysis`; `competitor-analysis` | [apistore](https://www.5118.com/apistore/detail/8ef3d6ed-2b12-ed11-8da8-e43d1a103141) |
+| `get_bid_sites_5118` | 已实现 | Wave 2 | `/bidsite` | 竞价推广公司挖掘 API | `keyword`; `pageIndex?`; `pageSize?`; `includeHighlight?` | `items[]`; `pagination` | `competitor-analysis` | [apistore](https://www.5118.com/apistore/detail/d1995837-e3e7-e811-80cd-1866da4dbcc0) |
+| `get_pc_top50_sites_5118` | 已实现 | Wave 2 | `/keywordrank/baidupc` | PC-前50网站信息 API | `keywords[]`; `checkRow?`; `executionMode?`; `taskId?` | `siteSnapshots[]`; `executionStatus`; `taskId` | `rank-tracker`; `serp-analysis` | [apistore](https://www.5118.com/apistore/detail/92d9a902-cca2-e711-b5b0-d4ae52d0f72c) |
+| `get_mobile_top50_sites_5118` | 已实现 | Wave 2 | `/keywordrank/baidumobile` | 移动-前50网站信息 API | `keywords[]`; `checkRow?`; `executionMode?`; `taskId?` | `siteSnapshots[]`; `executionStatus`; `taskId` | `rank-tracker`; `serp-analysis` | [apistore](https://www.5118.com/apistore/detail/f582d2b1-cea2-e711-b5b0-d4ae52d0f72c) |
 
 ## Skill 适配总结
 
@@ -63,21 +63,17 @@
 - `content-gap-analysis`
   适配 API：`domain-rank-v2`、`baidupc-rank-v2`、`mobile-rank-v2`、
   `bidword-v2`，再加 `keyword-param-v2`
-  后续 MCP 建议：`get_pc_site_rank_keywords_5118`、
-  `get_mobile_site_rank_keywords_5118`。
+  后续 MCP 建议：当前查询型范围内无需新增。
 - `competitor-analysis`
   适配 API：`domain-rank-v2`、`baidupc-rank-v2`、`mobile-rank-v2`、
   `bidword-v2`、`bid-site`、`weight`
-  后续 MCP 建议：`get_pc_site_rank_keywords_5118`、
-  `get_mobile_site_rank_keywords_5118`、`get_bid_sites_5118`。
+  后续 MCP 建议：当前查询型范围内无需新增。
 - `rank-tracker`
   适配 API：`rank-pc`、`rank-mobile`、`kwrank-pc`、`kwrank-mobile`、`traffic-dig`
-  后续 MCP 建议：`get_pc_top50_sites_5118`、
-  `get_mobile_top50_sites_5118`。
+  后续 MCP 建议：当前查询型范围内无需新增。
 - `serp-analysis`
   适配 API：`rank-pc`、`rank-mobile`、`kwrank-pc`、`kwrank-mobile`、`suggest`
-  后续 MCP 建议：`get_pc_top50_sites_5118`、
-  `get_mobile_top50_sites_5118`。
+  后续 MCP 建议：当前查询型范围内无需新增。
 
 ### 部分适配
 

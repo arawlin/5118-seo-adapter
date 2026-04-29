@@ -6,26 +6,25 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeRankSnapshotResponse } from "../normalizers/siteInsights.js";
+import { normalizeTopSiteSnapshotsResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { RankSnapshotData } from "../types/toolDataContracts.js";
+import type { TopSiteSnapshotsData } from "../types/toolDataContracts.js";
 
-const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 60;
+const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 60;
 
-export interface RankSnapshotInput extends AsyncControlInput {
-  url?: string;
+export interface TopSiteSnapshotInput extends AsyncControlInput {
   keywords?: string[];
   checkRow?: number;
 }
 
-interface RankSnapshotConfig {
+interface TopSiteSnapshotConfig {
   toolName: ApiToolName;
   apiName: string;
   endpoint: string;
   maxCheckRow: number;
 }
 
-interface RankSnapshotMeta {
+interface TopSiteSnapshotMeta {
   taskId?: string | number;
   dataReady: boolean;
 }
@@ -38,7 +37,7 @@ function extractTaskIdFromRoot(root: Record<string, unknown>): string | number |
   );
 }
 
-function resolveRankSnapshotMeta(raw: unknown): RankSnapshotMeta {
+function resolveTopSiteSnapshotMeta(raw: unknown): TopSiteSnapshotMeta {
   if (!raw || typeof raw !== "object") {
     return { dataReady: false };
   }
@@ -52,13 +51,13 @@ function resolveRankSnapshotMeta(raw: unknown): RankSnapshotMeta {
   }
 
   const record = data as Record<string, unknown>;
-  const dataReady = Array.isArray(record.keywordmonitor) || Array.isArray(record.list);
+  const dataReady = Array.isArray(record.keyword_monitor) || Array.isArray(record.list);
 
   return { taskId, dataReady };
 }
 
 function isPendingSubmitSuccess(raw: unknown): boolean {
-  const meta = resolveRankSnapshotMeta(raw);
+  const meta = resolveTopSiteSnapshotMeta(raw);
 
   if (meta.taskId === undefined || meta.taskId === null) {
     return false;
@@ -75,17 +74,13 @@ function extractTaskId(raw: unknown): string | number | undefined {
   return extractTaskIdFromRoot(raw as Record<string, unknown>);
 }
 
-export async function createRankSnapshotHandler(
-  input: RankSnapshotInput,
-  config: RankSnapshotConfig,
-): Promise<ResponseEnvelope<RankSnapshotData>> {
+export async function createTopSiteSnapshotHandler(
+  input: TopSiteSnapshotInput,
+  config: TopSiteSnapshotConfig,
+): Promise<ResponseEnvelope<TopSiteSnapshotsData>> {
   const mode = input.executionMode ?? "wait";
   const keywords = input.keywords ?? [];
   const hasTaskId = input.taskId !== undefined;
-
-  if (mode !== "poll" && !hasTaskId && !input.url) {
-    throw new ToolError("INVALID_INPUT", "url is required for submit/wait mode.");
-  }
 
   if (mode !== "poll" && !hasTaskId && keywords.length === 0) {
     throw new ToolError("INVALID_INPUT", "keywords is required for submit/wait mode.");
@@ -114,11 +109,10 @@ export async function createRankSnapshotHandler(
   const submit = async (): Promise<unknown> => {
     const encoded = encodeInputFields(
       {
-        url: input.url,
         keywords: keywords.join("|"),
         checkrow: input.checkRow,
       },
-      ["url", "keywords"],
+      ["keywords"],
     );
 
     return postForm(config.endpoint, apiKey, encoded);
@@ -138,14 +132,14 @@ export async function createRankSnapshotHandler(
     maxWaitSeconds: input.maxWaitSeconds,
     pollIntervalSeconds: input.pollIntervalSeconds,
     defaultMaxWaitSeconds: DEFAULT_TRAFFIC_MAX_WAIT_SECONDS,
-    defaultPollIntervalSeconds: DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS,
+    defaultPollIntervalSeconds: DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS,
     pendingCodes: ["101", "200104"],
     isPendingResult: isPendingSubmitSuccess,
     submit,
     poll,
     extractTaskId,
     normalizeData: (raw) => ({
-      data: normalizeRankSnapshotResponse(raw),
+      data: normalizeTopSiteSnapshotsResponse(raw),
       pagination: null,
     }),
   });

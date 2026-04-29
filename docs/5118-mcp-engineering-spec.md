@@ -257,16 +257,16 @@ These values are important because code generation often gets them wrong.
 
 | MCP tool | Official API / endpoint | Env var | Mode | Required input | Key options | Normalized data field | Constraints and notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `export_pc_site_keywords_5118` | PC Site Ranking Keywords v2 / `/keyword/pc/v2` | `API_5118_BAIDUPC_V2` | Sync | `url` | `pageIndex` | `keywords[]` | Vendor result root is `data.baidupc[]`; `pageSize` is fixed at 500 |
+| `get_pc_site_rank_keywords_5118` | PC Site Ranking Keywords v2 / `/keyword/pc/v2` | `API_5118_BAIDUPC_V2` | Sync | `url` | `pageIndex` | `items[]` | Vendor result root is `data.baidupc[]`; `pageSize` is fixed at 500 |
 | `get_baijiahao_rankings_5118` | Baijiahao Ranking Export / `/keyword/baijiahao` | `API_5118_BAIJIAHAO` | Sync | `keyword`, `platform` | none | `rankings[]` | `platform` is `pc` or `mobile`; keyword means the Baijiahao target |
-| `export_mobile_site_keywords_5118` | Mobile Site Ranking Keywords v2 / `/keyword/mobile/v2` | `API_5118_MOBILE_V2` | Sync | `url` | `pageIndex` | `keywords[]` | Vendor result root is `data.baidumobile[]`; `pageSize` is fixed at 500 |
+| `get_mobile_site_rank_keywords_5118` | Mobile Site Ranking Keywords v2 / `/keyword/mobile/v2` | `API_5118_MOBILE_V2` | Sync | `url` | `pageIndex` | `items[]` | Vendor result root is `data.baidumobile[]`; `pageSize` is fixed at 500 |
 | `get_domain_rank_keywords_5118` | Domain Ranking Keywords v2 / `/keyword/domain/v2` | `API_5118_DOMAIN_V2` | Sync | `url` | `pageIndex` | `items[]` | Whole-domain aggregation; the adapter only exposes `pageIndex`; vendor result root is `data.domain[]`; response page size is `1000` |
 
 ### Bid Intelligence
 
 | MCP tool | Official API / endpoint | Env var | Mode | Required input | Key options | Normalized data field | Constraints and notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `get_bid_companies_5118` | Bid Company Mining / `/bidsite` | `API_5118_BIDSITE` | Sync | `keyword` | `pageIndex`, `pageSize` | `companies[]` | Bid intelligence query; page size may go up to 500 |
+| `get_bid_sites_5118` | Bid Company Mining / `/bidsite` | `API_5118_BIDSITE` | Sync | `keyword` | `pageIndex`, `pageSize`, `includeHighlight` | `items[]` | Bid intelligence query; page size may go up to 500 |
 | `get_bid_keywords_5118` | Site Bid Keywords v2 / `/bidword/v2` | `API_5118_BIDWORD_V2` | Sync | `url` | `pageIndex`, `pageSize`, `includeHighlight` | `items[]` | Bid keyword export; page size may go up to 500 |
 
 ### Live Rank Checks

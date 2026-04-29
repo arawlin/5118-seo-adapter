@@ -1,0 +1,34 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "total": 207596,
+    "page_count": 416,
+    "page_index": 1,
+    "page_size": 500,
+    "baidumobile": [
+      {
+        "keyword": "黄浦江源安吉白茶",
+        "rank": 3,
+        "page_title": "黄浦江源安吉白茶价格报价行情-京东",
+        "page_url": "https://m.example.com/page",
+        "bidword_companycount": 84,
+        "long_keyword_count": 155,
+        "index": 0,
+        "mobile_index": 919,
+        "haosou_index": 1163,
+        "douyin_index": 89,
+        "toutiao_index": 256,
+        "bidword_kwc": 1,
+        "bidword_pcpv": 240,
+        "bidword_wisepv": 1433,
+        "sem_reason": "",
+        "sem_price": "0.35~4.57",
+        "bidword_recommend_price_avg": "3.25",
+        "google_index": 12100,
+        "kuaishou_index": 580,
+        "weibo_index": 320
+      }
+    ]
+  }
+}

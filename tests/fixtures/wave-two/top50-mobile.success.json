@@ -1,0 +1,27 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "taskid": 223356,
+    "keyword_monitor": [
+      {
+        "keyword": "SEO优化",
+        "search_engine": "baidumobile",
+        "ip": "1.2.3.5",
+        "area": "广东",
+        "network": "联通",
+        "time": "2026-03-18 10:31:00",
+        "ranks": [
+          {
+            "site_url": "m.example.com",
+            "rank": 2,
+            "page_title": "移动SEO优化教程",
+            "page_url": "https://m.example.com/seo",
+            "top100": 3200,
+            "site_weight": "5"
+          }
+        ]
+      }
+    ]
+  }
+}

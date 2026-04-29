@@ -3,13 +3,18 @@ import { z } from "zod";
 import { API_TOOL_NAMES } from "./config/apiKeyRegistry.js";
 import { checkUrlIndexing5118Handler } from "./tools/checkUrlIndexing5118.js";
 import { getBidKeywords5118Handler } from "./tools/getBidKeywords5118.js";
+import { getBidSites5118Handler } from "./tools/getBidSites5118.js";
 import { getDomainRankKeywords5118Handler } from "./tools/getDomainRankKeywords5118.js";
 import { getIndustryFrequencyWords5118Handler } from "./tools/getIndustryFrequencyWords5118.js";
 import { getKeywordMetrics5118Handler } from "./tools/getKeywordMetrics5118.js";
 import { getLongtailKeywords5118Handler } from "./tools/getLongtailKeywords5118.js";
 import { getMobileRankSnapshot5118Handler } from "./tools/getMobileRankSnapshot5118.js";
+import { getMobileSiteRankKeywords5118Handler } from "./tools/getMobileSiteRankKeywords5118.js";
+import { getMobileTop50Sites5118Handler } from "./tools/getMobileTop50Sites5118.js";
 import { getMobileTrafficKeywords5118Handler } from "./tools/getMobileTrafficKeywords5118.js";
 import { getPcRankSnapshot5118Handler } from "./tools/getPcRankSnapshot5118.js";
+import { getPcSiteRankKeywords5118Handler } from "./tools/getPcSiteRankKeywords5118.js";
+import { getPcTop50Sites5118Handler } from "./tools/getPcTop50Sites5118.js";
 import { getSiteWeight5118Handler } from "./tools/getSiteWeight5118.js";
 import {
   getSuggestTerms5118Handler,
@@ -718,6 +723,329 @@ export function createServer(): McpServer {
       },
     },
     async (input) => toToolResult(await checkUrlIndexing5118Handler(input)),
+  );
+
+  server.registerTool(
+    "get_pc_site_rank_keywords_5118",
+    {
+      title: "Get PC Site Rank Keywords 5118",
+      description: joinDescription(
+        "Sync PC site rank keyword export via 5118 /keyword/pc/v2.",
+        "Input fields: url=domain or host to query; pageIndex=1-based result page.",
+        jsonExample("Example input JSON", { url: "example.com", pageIndex: 1 }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        "Normalized data fields: data.items[]=PC site rank rows where keyword=ranking keyword text; rank=ranking position; pageTitle=ranking page title; pageUrl=ranking page URL; bidCompanyCount=advertiser count; longKeywordCount=related long-tail keyword count; index=PC index; mobileIndex=mobile index; haosouIndex=360 index; douyinIndex=Douyin index; toutiaoIndex=Toutiao index; competition=bid competition score; pcSearchVolume=PC search volume; mobileSearchVolume=mobile search volume; semReason=vendor traffic characteristic text; semPrice=SEM reference price range; recommendedBidAvg=average recommended bid; googleIndex=Google index; kuaishouIndex=Kuaishou index; weiboIndex=Weibo index.",
+        jsonExample("Example normalized data", {
+          items: [{
+            keyword: "水质分析仪表",
+            rank: 1,
+            pageTitle: "示例标题",
+            pageUrl: "https://example.com/page",
+            bidCompanyCount: 317,
+            longKeywordCount: 696,
+            index: 1063,
+            mobileIndex: 919,
+            haosouIndex: 1163,
+            douyinIndex: 89,
+            toutiaoIndex: 256,
+            competition: 1,
+            pcSearchVolume: 240,
+            mobileSearchVolume: 1433,
+            semReason: "高频热词",
+            semPrice: "0.35~4.57",
+            recommendedBidAvg: 3.25,
+            googleIndex: 12100,
+            kuaishouIndex: 580,
+            weiboIndex: 320,
+          }],
+          pagination: { pageIndex: 1, pageSize: 500, pageCount: 1182, total: 590511 },
+        }),
+        "The top-level pagination field and data.pagination describe the same page window.",
+        COMMON_PAGINATION_FIELDS_DESCRIPTION,
+      ),
+      inputSchema: {
+        url: z
+          .string()
+          .min(1)
+          .describe("Required domain or host to inspect for PC site rank keywords."),
+        pageIndex: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Optional 1-based result page number. Defaults to 1."),
+      },
+    },
+    async (input) => toToolResult(await getPcSiteRankKeywords5118Handler(input)),
+  );
+
+  server.registerTool(
+    "get_mobile_site_rank_keywords_5118",
+    {
+      title: "Get Mobile Site Rank Keywords 5118",
+      description: joinDescription(
+        "Sync mobile site rank keyword export via 5118 /keyword/mobile/v2.",
+        "Input fields: url=domain or host to query; pageIndex=1-based result page.",
+        jsonExample("Example input JSON", { url: "m.example.com", pageIndex: 1 }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        "Normalized data fields follow the same schema as get_pc_site_rank_keywords_5118, but the upstream list root is mobile-oriented and ranking rows typically resolve to mobile landing pages.",
+        jsonExample("Example normalized data", {
+          items: [{
+            keyword: "黄浦江源安吉白茶",
+            rank: 1,
+            pageTitle: "黄浦江源安吉白茶价格报价行情-京东",
+            pageUrl: "https://m.example.com/page",
+            bidCompanyCount: 84,
+            longKeywordCount: 155,
+            index: 0,
+            mobileIndex: 919,
+            haosouIndex: 1163,
+            douyinIndex: 89,
+            toutiaoIndex: 256,
+            competition: 1,
+            pcSearchVolume: 240,
+            mobileSearchVolume: 1433,
+            semReason: null,
+            semPrice: "0.35~4.57",
+            recommendedBidAvg: 3.25,
+            googleIndex: 12100,
+            kuaishouIndex: 580,
+            weiboIndex: 320,
+          }],
+          pagination: { pageIndex: 1, pageSize: 500, pageCount: 416, total: 207596 },
+        }),
+        "The top-level pagination field and data.pagination describe the same page window.",
+        COMMON_PAGINATION_FIELDS_DESCRIPTION,
+      ),
+      inputSchema: {
+        url: z
+          .string()
+          .min(1)
+          .describe("Required domain or host to inspect for mobile site rank keywords."),
+        pageIndex: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Optional 1-based result page number. Defaults to 1."),
+      },
+    },
+    async (input) => toToolResult(await getMobileSiteRankKeywords5118Handler(input)),
+  );
+
+  server.registerTool(
+    "get_bid_sites_5118",
+    {
+      title: "Get Bid Sites 5118",
+      description: joinDescription(
+        "Sync bid site mining via 5118 /bidsite.",
+        "Input fields: keyword=seed keyword to inspect; pageIndex=1-based result page; pageSize=rows per page, maximum 500; includeHighlight=whether upstream HTML highlight tags should be returned before normalization strips them into plain text fields.",
+        jsonExample("Example input JSON", {
+          keyword: "SEO优化",
+          pageIndex: 1,
+          pageSize: 20,
+          includeHighlight: false,
+        }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        "Normalized data fields: data.items[]=bid site rows where title=bid headline; intro=bid copy text; siteTitle=website title; siteUrl=domain or host; fullUrl=landing URL; companyName=matched company name; baiduPcWeight=5118 Baidu PC weight label; bidCount=number of bid discoveries; lastSeenAt=latest discovery time; firstSeenAt=earliest discovery time.",
+        jsonExample("Example normalized data", {
+          items: [{
+            title: "数据仪表,商业智能BI软件",
+            intro: "竞价文案",
+            siteTitle: "网站标题",
+            siteUrl: "sem.example.com",
+            fullUrl: "https://sem.example.com/landing",
+            companyName: "示例科技有限公司",
+            baiduPcWeight: "2",
+            bidCount: 14,
+            lastSeenAt: "2023-11-23T22:04:00",
+            firstSeenAt: "2020-12-22T22:03:00",
+          }],
+          pagination: { pageIndex: 1, pageSize: 20, pageCount: 1, total: 495 },
+        }),
+        "The top-level pagination field and data.pagination describe the same page window.",
+        COMMON_PAGINATION_FIELDS_DESCRIPTION,
+      ),
+      inputSchema: {
+        keyword: z
+          .string()
+          .min(1)
+          .describe("Required bid keyword used to discover advertising domains and landing pages."),
+        pageIndex: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Optional 1-based result page number. Defaults to 1."),
+        pageSize: z
+          .number()
+          .int()
+          .positive()
+          .max(500)
+          .optional()
+          .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
+        includeHighlight: z
+          .boolean()
+          .optional()
+          .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
+      },
+    },
+    async (input) => toToolResult(await getBidSites5118Handler(input)),
+  );
+
+  server.registerTool(
+    "get_pc_top50_sites_5118",
+    {
+      title: "Get PC Top50 Sites 5118",
+      description: joinDescription(
+        "Async PC top-50 site snapshot via 5118 /keywordrank/baidupc.",
+        "Input fields: keywords=keyword list for submit; checkRow=maximum ranking depth to inspect, up to 100; executionMode=submit, poll, or wait; taskId=existing vendor task id; maxWaitSeconds=client-side wait timeout; pollIntervalSeconds=client-side polling interval.",
+        jsonExample("Example submit input JSON", {
+          keywords: ["SEO优化", "关键词挖掘"],
+          executionMode: "submit",
+        }),
+        jsonExample("Example poll input JSON", { taskId: 123458, executionMode: "poll" }),
+        jsonExample("Example wait input JSON", {
+          keywords: ["SEO优化"],
+          executionMode: "wait",
+          maxWaitSeconds: 180,
+          pollIntervalSeconds: 60,
+        }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        ASYNC_RESPONSE_STATE_DESCRIPTION,
+        jsonExample("Example pending envelope", {
+          executionStatus: "pending",
+          taskId: 123458,
+          data: null,
+        }),
+        "Normalized data fields: data.siteSnapshots[]=keyword snapshot rows where keyword=monitored keyword; searchEngine=search engine id; ip=probe IP; area=probe area; network=probe network; checkedAt=vendor snapshot time; ranks[]=ranking rows where siteUrl=ranking domain; rank=ranking position; pageTitle=page title; pageUrl=page URL; top100=Top100 keyword count; siteWeight=5118 site weight label.",
+        jsonExample("Example completed data", {
+          siteSnapshots: [{
+            keyword: "SEO优化",
+            searchEngine: "baidupc",
+            ip: "1.2.3.4",
+            area: "广东",
+            network: "电信",
+            checkedAt: "2026-03-18 10:30:00",
+            ranks: [{
+              siteUrl: "www.example.com",
+              rank: 1,
+              pageTitle: "SEO优化教程",
+              pageUrl: "https://www.example.com/seo",
+              top100: 5200,
+              siteWeight: "6",
+            }],
+          }],
+        }),
+      ),
+      inputSchema: {
+        keywords: z
+          .array(z.string().min(1))
+          .max(50)
+          .optional()
+          .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
+        checkRow: z
+          .number()
+          .int()
+          .positive()
+          .max(100)
+          .optional()
+          .describe("Optional maximum ranking depth to inspect. Maximum 100 for the PC endpoint."),
+        executionMode: z
+          .enum(["submit", "poll", "wait"])
+          .optional()
+          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
+        taskId: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+        maxWaitSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Optional maximum client-side wait time in seconds for wait mode."),
+        pollIntervalSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
+      },
+    },
+    async (input) => toToolResult(await getPcTop50Sites5118Handler(input)),
+  );
+
+  server.registerTool(
+    "get_mobile_top50_sites_5118",
+    {
+      title: "Get Mobile Top50 Sites 5118",
+      description: joinDescription(
+        "Async mobile top-50 site snapshot via 5118 /keywordrank/baidumobile.",
+        "Input fields follow the same schema as get_pc_top50_sites_5118, but searchEngine typically resolves to baidumobile and the returned page URLs usually point to mobile SERP results.",
+        jsonExample("Example submit input JSON", {
+          keywords: ["SEO优化"],
+          executionMode: "submit",
+        }),
+        jsonExample("Example poll input JSON", { taskId: 123459, executionMode: "poll" }),
+        COMMON_RESPONSE_FIELDS_DESCRIPTION,
+        ASYNC_RESPONSE_STATE_DESCRIPTION,
+        jsonExample("Example pending envelope", {
+          executionStatus: "pending",
+          taskId: 123459,
+          data: null,
+        }),
+        jsonExample("Example completed data", {
+          siteSnapshots: [{
+            keyword: "SEO优化",
+            searchEngine: "baidumobile",
+            ip: "1.2.3.5",
+            area: "广东",
+            network: "联通",
+            checkedAt: "2026-03-18 10:30:00",
+            ranks: [{
+              siteUrl: "m.example.com",
+              rank: 2,
+              pageTitle: "移动SEO优化教程",
+              pageUrl: "https://m.example.com/seo",
+              top100: 3200,
+              siteWeight: "5",
+            }],
+          }],
+        }),
+      ),
+      inputSchema: {
+        keywords: z
+          .array(z.string().min(1))
+          .max(50)
+          .optional()
+          .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
+        checkRow: z
+          .number()
+          .int()
+          .positive()
+          .max(100)
+          .optional()
+          .describe("Optional maximum ranking depth to inspect. Maximum 100 for the mobile endpoint."),
+        executionMode: z
+          .enum(["submit", "poll", "wait"])
+          .optional()
+          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
+        taskId: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+        maxWaitSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Optional maximum client-side wait time in seconds for wait mode."),
+        pollIntervalSeconds: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
+      },
+    },
+    async (input) => toToolResult(await getMobileTop50Sites5118Handler(input)),
   );
 
   return server;
