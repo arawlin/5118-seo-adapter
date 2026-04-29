@@ -54,13 +54,46 @@ function toToolResult(payload: unknown) {
   };
 }
 
+type RegisteredToolName = (typeof REGISTERED_TOOL_NAMES)[number];
+type RegisterToolMethod = McpServer["registerTool"];
+
+function createToolRegistrar(server: McpServer) {
+  const registeredToolNames = new Set<RegisteredToolName>();
+
+  const registerTool: RegisterToolMethod = (name, config, handler) => {
+
+    if (!REGISTERED_TOOL_NAMES.includes(name as RegisteredToolName)) {
+      throw new Error(`Unsupported tool registration: ${name}.`);
+    }
+
+    registeredToolNames.add(name as RegisteredToolName);
+    return server.registerTool(name, config, handler);
+  };
+
+  function assertToolCoverage(): void {
+    const missing = REGISTERED_TOOL_NAMES.filter(
+      (toolName) => !registeredToolNames.has(toolName),
+    );
+
+    if (missing.length > 0) {
+      throw new Error(
+        `Tool registration mismatch. Missing registrations: ${missing.join(", ")}.`,
+      );
+    }
+  }
+
+  return { registerTool, assertToolCoverage };
+}
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "5118-seo-adapter",
     version: "0.1.0",
   });
 
-  server.registerTool(
+  const { registerTool, assertToolCoverage } = createToolRegistrar(server);
+
+  registerTool(
     "get_longtail_keywords_5118",
     {
       title: "Get Longtail Keywords 5118",
@@ -135,7 +168,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getLongtailKeywords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_industry_frequency_words_5118",
     {
       title: "Get Industry Frequency Words 5118",
@@ -159,7 +192,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getIndustryFrequencyWords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_suggest_terms_5118",
     {
       title: "Get Suggest Terms 5118",
@@ -192,7 +225,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getSuggestTerms5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_keyword_metrics_5118",
     {
       title: "Get Keyword Metrics 5118",
@@ -272,7 +305,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getKeywordMetrics5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_mobile_traffic_keywords_5118",
     {
       title: "Get Mobile Traffic Keywords 5118",
@@ -352,7 +385,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getMobileTrafficKeywords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_domain_rank_keywords_5118",
     {
       title: "Get Domain Rank Keywords 5118",
@@ -401,7 +434,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getDomainRankKeywords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_bid_keywords_5118",
     {
       title: "Get Bid Keywords 5118",
@@ -469,7 +502,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getBidKeywords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_site_weight_5118",
     {
       title: "Get Site Weight 5118",
@@ -496,7 +529,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getSiteWeight5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_pc_rank_snapshot_5118",
     {
       title: "Get PC Rank Snapshot 5118",
@@ -583,7 +616,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getPcRankSnapshot5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_mobile_rank_snapshot_5118",
     {
       title: "Get Mobile Rank Snapshot 5118",
@@ -663,7 +696,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getMobileRankSnapshot5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "check_url_indexing_5118",
     {
       title: "Check URL Indexing 5118",
@@ -725,7 +758,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await checkUrlIndexing5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_pc_site_rank_keywords_5118",
     {
       title: "Get PC Site Rank Keywords 5118",
@@ -779,7 +812,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getPcSiteRankKeywords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_mobile_site_rank_keywords_5118",
     {
       title: "Get Mobile Site Rank Keywords 5118",
@@ -833,7 +866,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getMobileSiteRankKeywords5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_bid_sites_5118",
     {
       title: "Get Bid Sites 5118",
@@ -893,7 +926,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getBidSites5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_pc_top50_sites_5118",
     {
       title: "Get PC Top50 Sites 5118",
@@ -974,7 +1007,7 @@ export function createServer(): McpServer {
     async (input) => toToolResult(await getPcTop50Sites5118Handler(input)),
   );
 
-  server.registerTool(
+  registerTool(
     "get_mobile_top50_sites_5118",
     {
       title: "Get Mobile Top50 Sites 5118",
@@ -1047,6 +1080,8 @@ export function createServer(): McpServer {
     },
     async (input) => toToolResult(await getMobileTop50Sites5118Handler(input)),
   );
+
+  assertToolCoverage();
 
   return server;
 }
