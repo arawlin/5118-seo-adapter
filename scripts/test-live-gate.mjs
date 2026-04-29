@@ -14,6 +14,7 @@ const DEFAULT_PAGE_URL = "https://www.baidu.com/";
 const DEFAULT_SCENARIO_PATHS = new Map([
   ["wave-one", "examples/wave-one-sequence.json"],
   ["wave-two", "examples/wave-two-sequence.json"],
+  ["all-tools", "examples/all-tools-sequence.json"],
 ]);
 
 const TOOL_ALIASES = new Map([
@@ -64,13 +65,14 @@ Usage:
   API_5118_KW_PARAM_V2=xxxx npm run test:live -- --tool metrics --keywords "比特币价格,比特币是什么" --executionMode wait
   API_5118_LONGTAIL_V2=xxxx API_5118_FREQ_WORDS=xxxx API_5118_SUGGEST=xxxx API_5118_KW_PARAM_V2=xxxx API_5118_TRAFFIC=xxxx npm run test:live -- --scenario wave-one
   API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_KWRANK_PC=xxxx API_5118_KWRANK_MOBILE=xxxx npm run test:live -- --scenario wave-two
+  Set all required API_5118_* env vars, then run: npm run test:live -- --scenario all-tools
   API_5118_DOMAIN_V2=xxxx npm run test:live -- --tool domain-rank --url www.baidu.com --pageIndex 1
   API_5118_RANK_PC=xxxx npm run test:live -- --tool rank-pc --url www.baidu.com --keywords "比特币价格" --executionMode submit
   API_5118_SUGGEST=xxxx npm run test:live:debug -- --tool suggest --word "比特币"
 
 Options:
   --tool <name>                 Tool alias or full MCP tool name for any implemented tool
-  --scenario <name>             Built-in scenario name: wave-one or wave-two
+  --scenario <name>             Built-in scenario name: wave-one, wave-two, or all-tools
   --sequence <path>             Custom scenario JSON file path
   --keyword <value>             Generic keyword input
   --url <value>                 Generic domain or URL input for URL-based tools

@@ -70,6 +70,7 @@ node dist/index.js
 
 - `wave-one` -> `examples/wave-one-sequence.json`，覆盖当前阶段工具与全部 Wave 1 工具
 - `wave-two` -> `examples/wave-two-sequence.json`，覆盖全部 Wave 2 工具
+- `all-tools` -> `examples/all-tools-sequence.json`，一次覆盖全部已实现工具
 
 单工具模式支持完整 MCP tool 名，也支持以下别名：
 
@@ -103,7 +104,7 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 ```
 
 如果你需要不同的执行顺序或输入组合，可以使用 `--sequence <path>` 指向
-自定义 JSON 场景文件，而不是使用内置的 `wave-one` 或 `wave-two`。
+自定义 JSON 场景文件，而不是使用内置的 `wave-one`、`wave-two` 或 `all-tools`。
 
 ## Stdio 配置示例
 

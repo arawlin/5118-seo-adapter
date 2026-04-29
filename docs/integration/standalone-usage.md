@@ -71,6 +71,7 @@ Built-in scenarios:
 
 - `wave-one` -> `examples/wave-one-sequence.json`, covering the current-set tools plus all Wave 1 tools
 - `wave-two` -> `examples/wave-two-sequence.json`, covering all Wave 2 tools
+- `all-tools` -> `examples/all-tools-sequence.json`, covering every implemented tool in one run
 
 Single-tool mode accepts either a full MCP tool name or one of these aliases:
 
@@ -104,7 +105,7 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 ```
 
 Use `--sequence <path>` when you want to run a custom JSON scenario file instead
-of the built-in `wave-one` or `wave-two` sequence.
+of the built-in `wave-one`, `wave-two`, or `all-tools` sequence.
 
 ## Stdio Transport Example
 
