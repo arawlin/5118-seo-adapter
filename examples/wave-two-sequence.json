@@ -1,0 +1,48 @@
+{
+  "seedKeyword": "比特币",
+  "steps": [
+    {
+      "order": 1,
+      "tool": "get_pc_site_rank_keywords_5118",
+      "input": {
+        "url": "www.baidu.com",
+        "pageIndex": 1
+      }
+    },
+    {
+      "order": 2,
+      "tool": "get_mobile_site_rank_keywords_5118",
+      "input": {
+        "url": "m.baidu.com",
+        "pageIndex": 1
+      }
+    },
+    {
+      "order": 3,
+      "tool": "get_bid_sites_5118",
+      "input": {
+        "keyword": "比特币",
+        "pageIndex": 1,
+        "pageSize": 20
+      }
+    },
+    {
+      "order": 4,
+      "tool": "get_pc_top50_sites_5118",
+      "input": {
+        "keywords": ["比特币价格"],
+        "checkRow": 50,
+        "executionMode": "submit"
+      }
+    },
+    {
+      "order": 5,
+      "tool": "get_mobile_top50_sites_5118",
+      "input": {
+        "keywords": ["比特币价格"],
+        "checkRow": 50,
+        "executionMode": "submit"
+      }
+    }
+  ]
+}

@@ -6,7 +6,9 @@ This document is also available in [Chinese](./standalone-usage-zh.md).
 
 This project is a standalone MCP server that wraps official 5118 APIs.
 
-The current implementation includes exactly five tools:
+The current implementation includes 16 tools.
+
+Current set:
 
 - `get_longtail_keywords_5118`
 - `get_industry_frequency_words_5118`
@@ -14,15 +16,43 @@ The current implementation includes exactly five tools:
 - `get_keyword_metrics_5118`
 - `get_mobile_traffic_keywords_5118`
 
+Wave 1:
+
+- `get_domain_rank_keywords_5118`
+- `get_bid_keywords_5118`
+- `get_site_weight_5118`
+- `get_pc_rank_snapshot_5118`
+- `get_mobile_rank_snapshot_5118`
+- `check_url_indexing_5118`
+
+Wave 2:
+
+- `get_pc_site_rank_keywords_5118`
+- `get_mobile_site_rank_keywords_5118`
+- `get_bid_sites_5118`
+- `get_pc_top50_sites_5118`
+- `get_mobile_top50_sites_5118`
+
 ## Environment Variables
 
-Set one API key env var per currently implemented tool:
+Set one API key env var per tool you plan to call:
 
 - `API_5118_LONGTAIL_V2`
 - `API_5118_FREQ_WORDS`
 - `API_5118_SUGGEST`
 - `API_5118_KW_PARAM_V2`
 - `API_5118_TRAFFIC`
+- `API_5118_DOMAIN_V2`
+- `API_5118_BIDWORD_V2`
+- `API_5118_WEIGHT`
+- `API_5118_RANK_PC`
+- `API_5118_RANK_MOBILE`
+- `API_5118_INCLUDE`
+- `API_5118_BAIDUPC_V2`
+- `API_5118_MOBILE_V2`
+- `API_5118_BIDSITE`
+- `API_5118_KWRANK_PC`
+- `API_5118_KWRANK_MOBILE`
 
 ## Build and Run
 
@@ -32,10 +62,57 @@ npm run build
 node dist/index.js
 ```
 
+## Live Runner
+
+Use `scripts/test-live-gate.mjs` for manual live checks after the build output
+is available.
+
+Built-in scenarios:
+
+- `wave-one` -> `examples/wave-one-sequence.json`, covering the current-set tools plus all Wave 1 tools
+- `wave-two` -> `examples/wave-two-sequence.json`, covering all Wave 2 tools
+
+Single-tool mode accepts either a full MCP tool name or one of these aliases:
+
+| Alias | MCP tool |
+| --- | --- |
+| `longtail` | `get_longtail_keywords_5118` |
+| `frequency` | `get_industry_frequency_words_5118` |
+| `suggest` | `get_suggest_terms_5118` |
+| `metrics` | `get_keyword_metrics_5118` |
+| `traffic` | `get_mobile_traffic_keywords_5118` |
+| `domain-rank` | `get_domain_rank_keywords_5118` |
+| `bid-keywords` | `get_bid_keywords_5118` |
+| `weight` | `get_site_weight_5118` |
+| `rank-pc` | `get_pc_rank_snapshot_5118` |
+| `rank-mobile` | `get_mobile_rank_snapshot_5118` |
+| `include` | `check_url_indexing_5118` |
+| `indexing` | `check_url_indexing_5118` |
+| `pc-site-rank` | `get_pc_site_rank_keywords_5118` |
+| `mobile-site-rank` | `get_mobile_site_rank_keywords_5118` |
+| `bid-sites` | `get_bid_sites_5118` |
+| `top50-pc` | `get_pc_top50_sites_5118` |
+| `top50-mobile` | `get_mobile_top50_sites_5118` |
+
+Representative commands:
+
+```bash
+API_5118_DOMAIN_V2=xxxx npm run test:live -- --tool domain-rank --url www.baidu.com --pageIndex 1
+API_5118_INCLUDE=xxxx npm run test:live -- --tool include --urls https://www.baidu.com/,https://www.jd.com/ --executionMode submit
+API_5118_RANK_PC=xxxx npm run test:live -- --tool rank-pc --url www.baidu.com --keywords "比特币价格" --executionMode submit
+API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_KWRANK_PC=xxxx API_5118_KWRANK_MOBILE=xxxx npm run test:live -- --scenario wave-two
+```
+
+Use `--sequence <path>` when you want to run a custom JSON scenario file instead
+of the built-in `wave-one` or `wave-two` sequence.
+
 ## Stdio Transport Example
 
 Use [examples/vscode-mcp.stdio.example.json](../../examples/vscode-mcp.stdio.example.json)
 as the reference entry.
+
+The example env block now lists all supported tool API keys. Remove any unused
+entries for your local setup if you only plan to expose a subset of tools.
 
 ## Tool Execution Model
 
@@ -93,6 +170,11 @@ async task state.
 This section maps each currently implemented MCP tool to its official 5118 API
 detail page and documents the MCP-facing request and response contract.
 
+The compact table below covers all 16 tools. The long-form sections that follow
+focus on the current-set tools and representative async patterns. For the full
+Wave 1 and Wave 2 field matrix, also see
+[docs/5118-mcp-engineering-spec.md](../5118-mcp-engineering-spec.md).
+
 ### Public Type Imports
 
 External consumers can now import the stable normalized contracts from one path:
@@ -118,6 +200,17 @@ for compatibility.
 | `get_suggest_terms_5118` | `/suggest/list` | Suggestion Mining API | [Detail](https://www.5118.com/apistore/detail/597e2193-9490-eb11-8daf-e4434bdf6706) | `data.suggestions[]` |
 | `get_keyword_metrics_5118` | `/keywordparam/v2` | Keyword Search Volume Info API v2 | [Detail](https://www.5118.com/apistore/detail/90f3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
 | `get_mobile_traffic_keywords_5118` | `/traffic` | Mobile Traffic Keyword Mining API | [Detail](https://www.5118.com/apistore/detail/540c9870-b2b9-e911-80d2-1866da4dbcc0) | `data.keywords[]` |
+| `get_domain_rank_keywords_5118` | `/keyword/domain/v2` | Domain Ranking Keywords API v2 | [Detail](https://www.5118.com/apistore/detail/8ff3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_bid_keywords_5118` | `/bidword/v2` | Site Bid Keywords API v2 | [Detail](https://www.5118.com/apistore/detail/8af3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_site_weight_5118` | `/weight` | Site 5118 Weight API | [Detail](https://www.5118.com/apistore/detail/69429f16-24f0-e711-80c8-1866da4dbcc0) | `data.weights[]` |
+| `get_pc_rank_snapshot_5118` | `/morerank/baidupc` | PC Rank Snapshot API | [Detail](https://www.5118.com/apistore/detail/0d5b519e-d2a2-e711-b5b0-d4ae52d0f72c) | `data.rankings[]` |
+| `get_mobile_rank_snapshot_5118` | `/morerank/baidumobile` | Mobile Rank Snapshot API | [Detail](https://www.5118.com/apistore/detail/9d211434-d3a2-e711-b5b0-d4ae52d0f72c) | `data.rankings[]` |
+| `check_url_indexing_5118` | `/include` | URL Indexing Check API | [Detail](https://www.5118.com/apistore/detail/f18cc2ae-8ea2-e711-b5b0-d4ae52d0f72c) | `data.items[]` |
+| `get_pc_site_rank_keywords_5118` | `/keyword/pc/v2` | PC Site Rank Keywords API v2 | [Detail](https://www.5118.com/apistore/detail/8df3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_mobile_site_rank_keywords_5118` | `/keyword/mobile/v2` | Mobile Site Rank Keywords API v2 | [Detail](https://www.5118.com/apistore/detail/8ef3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_bid_sites_5118` | `/bidsite` | Bid Site Mining API | [Detail](https://www.5118.com/apistore/detail/d1995837-e3e7-e811-80cd-1866da4dbcc0) | `data.items[]` |
+| `get_pc_top50_sites_5118` | `/keywordrank/baidupc` | PC Top-50 Sites API | [Detail](https://www.5118.com/apistore/detail/92d9a902-cca2-e711-b5b0-d4ae52d0f72c) | `data.siteSnapshots[]` |
+| `get_mobile_top50_sites_5118` | `/keywordrank/baidumobile` | Mobile Top-50 Sites API | [Detail](https://www.5118.com/apistore/detail/f582d2b1-cea2-e711-b5b0-d4ae52d0f72c) | `data.siteSnapshots[]` |
 
 ### get_longtail_keywords_5118
 

@@ -11,7 +11,18 @@
         "API_5118_FREQ_WORDS": "your-5118-frequency-key",
         "API_5118_SUGGEST": "your-5118-suggest-key",
         "API_5118_KW_PARAM_V2": "your-5118-keyword-metrics-key",
-        "API_5118_TRAFFIC": "your-5118-traffic-key"
+        "API_5118_TRAFFIC": "your-5118-traffic-key",
+        "API_5118_DOMAIN_V2": "your-5118-domain-rank-key",
+        "API_5118_BIDWORD_V2": "your-5118-bid-keywords-key",
+        "API_5118_WEIGHT": "your-5118-site-weight-key",
+        "API_5118_RANK_PC": "your-5118-pc-rank-key",
+        "API_5118_RANK_MOBILE": "your-5118-mobile-rank-key",
+        "API_5118_INCLUDE": "your-5118-url-indexing-key",
+        "API_5118_BAIDUPC_V2": "your-5118-pc-site-rank-keywords-key",
+        "API_5118_MOBILE_V2": "your-5118-mobile-site-rank-keywords-key",
+        "API_5118_BIDSITE": "your-5118-bid-sites-key",
+        "API_5118_KWRANK_PC": "your-5118-pc-top50-sites-key",
+        "API_5118_KWRANK_MOBILE": "your-5118-mobile-top50-sites-key"
       }
     }
   }

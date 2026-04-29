@@ -12,6 +12,13 @@
     },
     {
       "order": 2,
+      "tool": "get_industry_frequency_words_5118",
+      "input": {
+        "keyword": "比特币"
+      }
+    },
+    {
+      "order": 3,
       "tool": "get_suggest_terms_5118",
       "input": {
         "word": "比特币",
@@ -19,7 +26,7 @@
       }
     },
     {
-      "order": 3,
+      "order": 4,
       "tool": "get_keyword_metrics_5118",
       "input": {
         "keywords": ["比特币价格", "比特币是什么"],
@@ -29,10 +36,62 @@
       }
     },
     {
-      "order": 4,
+      "order": 5,
       "tool": "get_mobile_traffic_keywords_5118",
       "input": {
         "keyword": "比特币",
+        "executionMode": "submit"
+      }
+    },
+    {
+      "order": 6,
+      "tool": "get_domain_rank_keywords_5118",
+      "input": {
+        "url": "www.baidu.com",
+        "pageIndex": 1
+      }
+    },
+    {
+      "order": 7,
+      "tool": "get_bid_keywords_5118",
+      "input": {
+        "url": "www.baidu.com",
+        "pageIndex": 1,
+        "pageSize": 20
+      }
+    },
+    {
+      "order": 8,
+      "tool": "get_site_weight_5118",
+      "input": {
+        "url": "www.baidu.com"
+      }
+    },
+    {
+      "order": 9,
+      "tool": "get_pc_rank_snapshot_5118",
+      "input": {
+        "url": "www.baidu.com",
+        "keywords": ["比特币价格"],
+        "checkRow": 50,
+        "executionMode": "submit"
+      }
+    },
+    {
+      "order": 10,
+      "tool": "get_mobile_rank_snapshot_5118",
+      "input": {
+        "url": "m.baidu.com",
+        "keywords": ["比特币价格"],
+        "checkRow": 50,
+        "executionMode": "submit"
+      }
+    },
+    {
+      "order": 11,
+      "tool": "check_url_indexing_5118",
+      "input": {
+        "urls": ["https://www.baidu.com/"],
         "executionMode": "submit"
       }
     }

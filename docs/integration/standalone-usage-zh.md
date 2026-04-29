@@ -6,7 +6,9 @@
 
 本工程是独立的 MCP server，仅封装 5118 官方 API。
 
-当前实现固定包含 5 个工具：
+当前实现共包含 16 个工具。
+
+当前阶段：
 
 - `get_longtail_keywords_5118`
 - `get_industry_frequency_words_5118`
@@ -14,15 +16,43 @@
 - `get_keyword_metrics_5118`
 - `get_mobile_traffic_keywords_5118`
 
+Wave 1：
+
+- `get_domain_rank_keywords_5118`
+- `get_bid_keywords_5118`
+- `get_site_weight_5118`
+- `get_pc_rank_snapshot_5118`
+- `get_mobile_rank_snapshot_5118`
+- `check_url_indexing_5118`
+
+Wave 2：
+
+- `get_pc_site_rank_keywords_5118`
+- `get_mobile_site_rank_keywords_5118`
+- `get_bid_sites_5118`
+- `get_pc_top50_sites_5118`
+- `get_mobile_top50_sites_5118`
+
 ## 环境变量
 
-当前实现的 5 个工具分别使用独立的 API key 环境变量：
+按需为要调用的工具设置对应的 API key 环境变量：
 
 - `API_5118_LONGTAIL_V2`
 - `API_5118_FREQ_WORDS`
 - `API_5118_SUGGEST`
 - `API_5118_KW_PARAM_V2`
 - `API_5118_TRAFFIC`
+- `API_5118_DOMAIN_V2`
+- `API_5118_BIDWORD_V2`
+- `API_5118_WEIGHT`
+- `API_5118_RANK_PC`
+- `API_5118_RANK_MOBILE`
+- `API_5118_INCLUDE`
+- `API_5118_BAIDUPC_V2`
+- `API_5118_MOBILE_V2`
+- `API_5118_BIDSITE`
+- `API_5118_KWRANK_PC`
+- `API_5118_KWRANK_MOBILE`
 
 ## 构建与启动
 
@@ -32,10 +62,56 @@ npm run build
 node dist/index.js
 ```
 
+## Live Runner
+
+构建产物就绪后，可以使用 `scripts/test-live-gate.mjs` 做人工真实调用校验。
+
+内置场景：
+
+- `wave-one` -> `examples/wave-one-sequence.json`，覆盖当前阶段工具与全部 Wave 1 工具
+- `wave-two` -> `examples/wave-two-sequence.json`，覆盖全部 Wave 2 工具
+
+单工具模式支持完整 MCP tool 名，也支持以下别名：
+
+| 别名 | MCP tool |
+| --- | --- |
+| `longtail` | `get_longtail_keywords_5118` |
+| `frequency` | `get_industry_frequency_words_5118` |
+| `suggest` | `get_suggest_terms_5118` |
+| `metrics` | `get_keyword_metrics_5118` |
+| `traffic` | `get_mobile_traffic_keywords_5118` |
+| `domain-rank` | `get_domain_rank_keywords_5118` |
+| `bid-keywords` | `get_bid_keywords_5118` |
+| `weight` | `get_site_weight_5118` |
+| `rank-pc` | `get_pc_rank_snapshot_5118` |
+| `rank-mobile` | `get_mobile_rank_snapshot_5118` |
+| `include` | `check_url_indexing_5118` |
+| `indexing` | `check_url_indexing_5118` |
+| `pc-site-rank` | `get_pc_site_rank_keywords_5118` |
+| `mobile-site-rank` | `get_mobile_site_rank_keywords_5118` |
+| `bid-sites` | `get_bid_sites_5118` |
+| `top50-pc` | `get_pc_top50_sites_5118` |
+| `top50-mobile` | `get_mobile_top50_sites_5118` |
+
+常见命令示例：
+
+```bash
+API_5118_DOMAIN_V2=xxxx npm run test:live -- --tool domain-rank --url www.baidu.com --pageIndex 1
+API_5118_INCLUDE=xxxx npm run test:live -- --tool include --urls https://www.baidu.com/,https://www.jd.com/ --executionMode submit
+API_5118_RANK_PC=xxxx npm run test:live -- --tool rank-pc --url www.baidu.com --keywords "比特币价格" --executionMode submit
+API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_KWRANK_PC=xxxx API_5118_KWRANK_MOBILE=xxxx npm run test:live -- --scenario wave-two
+```
+
+如果你需要不同的执行顺序或输入组合，可以使用 `--sequence <path>` 指向
+自定义 JSON 场景文件，而不是使用内置的 `wave-one` 或 `wave-two`。
+
 ## Stdio 配置示例
 
 请参考 [examples/vscode-mcp.stdio.example.json](../../examples/vscode-mcp.stdio.example.json)
 中的标准配置。
+
+示例里的 env 配置现在列出了全部已支持工具的 API key。若你的本地接入只会启用
+部分工具，可以删掉不需要的键。
 
 ## 工具执行模型
 
@@ -89,8 +165,12 @@ node dist/index.js
 
 ## 当前 Tool 参考
 
-这一节把当前 5 个已实现 MCP tool，与官方 5118 API 详情页以及 MCP 侧实际调用契约
+这一节把当前全部 16 个已实现 MCP tool，与官方 5118 API 详情页以及 MCP 侧实际调用契约
 对齐起来。
+
+下面的总表覆盖全部 16 个工具。后面的长篇章节主要展开当前阶段工具和典型异步模式。
+如果你需要完整的 Wave 1 与 Wave 2 字段矩阵，请同时参考
+[docs/5118-mcp-engineering-spec-zh.md](../5118-mcp-engineering-spec-zh.md)。
 
 ### 公开类型导入入口
 
@@ -116,6 +196,17 @@ import type {
 | `get_suggest_terms_5118` | `/suggest/list` | 下拉联想词挖掘 API | [详情](https://www.5118.com/apistore/detail/597e2193-9490-eb11-8daf-e4434bdf6706) | `data.suggestions[]` |
 | `get_keyword_metrics_5118` | `/keywordparam/v2` | 关键词搜索量信息 API v2 | [详情](https://www.5118.com/apistore/detail/90f3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
 | `get_mobile_traffic_keywords_5118` | `/traffic` | 移动流量词挖掘 API | [详情](https://www.5118.com/apistore/detail/540c9870-b2b9-e911-80d2-1866da4dbcc0) | `data.keywords[]` |
+| `get_domain_rank_keywords_5118` | `/keyword/domain/v2` | PC 整站排名词导出 API v2 | [详情](https://www.5118.com/apistore/detail/8ff3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_bid_keywords_5118` | `/bidword/v2` | 网站竞价词挖掘 API v2 | [详情](https://www.5118.com/apistore/detail/8af3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_site_weight_5118` | `/weight` | 网站 5118 权重查询 API | [详情](https://www.5118.com/apistore/detail/69429f16-24f0-e711-80c8-1866da4dbcc0) | `data.weights[]` |
+| `get_pc_rank_snapshot_5118` | `/morerank/baidupc` | PC 排名查询 API | [详情](https://www.5118.com/apistore/detail/0d5b519e-d2a2-e711-b5b0-d4ae52d0f72c) | `data.rankings[]` |
+| `get_mobile_rank_snapshot_5118` | `/morerank/baidumobile` | 移动排名查询 API | [详情](https://www.5118.com/apistore/detail/9d211434-d3a2-e711-b5b0-d4ae52d0f72c) | `data.rankings[]` |
+| `check_url_indexing_5118` | `/include` | URL 收录检测 API | [详情](https://www.5118.com/apistore/detail/f18cc2ae-8ea2-e711-b5b0-d4ae52d0f72c) | `data.items[]` |
+| `get_pc_site_rank_keywords_5118` | `/keyword/pc/v2` | PC 网站排名词导出 API v2 | [详情](https://www.5118.com/apistore/detail/8df3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_mobile_site_rank_keywords_5118` | `/keyword/mobile/v2` | 移动网站排名词导出 API v2 | [详情](https://www.5118.com/apistore/detail/8ef3d6ed-2b12-ed11-8da8-e43d1a103141) | `data.items[]` |
+| `get_bid_sites_5118` | `/bidsite` | 竞价推广公司挖掘 API | [详情](https://www.5118.com/apistore/detail/d1995837-e3e7-e811-80cd-1866da4dbcc0) | `data.items[]` |
+| `get_pc_top50_sites_5118` | `/keywordrank/baidupc` | PC 前 50 网站信息 API | [详情](https://www.5118.com/apistore/detail/92d9a902-cca2-e711-b5b0-d4ae52d0f72c) | `data.siteSnapshots[]` |
+| `get_mobile_top50_sites_5118` | `/keywordrank/baidumobile` | 移动前 50 网站信息 API | [详情](https://www.5118.com/apistore/detail/f582d2b1-cea2-e711-b5b0-d4ae52d0f72c) | `data.siteSnapshots[]` |
 
 ### get_longtail_keywords_5118
 
