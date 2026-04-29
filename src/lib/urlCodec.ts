@@ -5,7 +5,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function safeDecode(value: string): string {
   const hasEncodedByte = /%[0-9A-Fa-f]{2}/.test(value);
 
-  if (!hasEncodedByte && !value.includes("+")) {
+  if (!hasEncodedByte) {
     return value;
   }
 
