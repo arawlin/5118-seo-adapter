@@ -1,6 +1,6 @@
 import { createRankSnapshotHandler, type RankSnapshotInput } from "./rankSnapshotBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { RankSnapshotData } from "../types/toolDataContracts.js";
+import type { RankSnapshotData } from "../types/toolOutputSchemas.js";
 
 export type GetPcRankSnapshotInput = RankSnapshotInput;
 

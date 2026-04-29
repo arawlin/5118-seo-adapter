@@ -158,6 +158,21 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 | `warnings` | string[] | 非致命适配层告警，当前通常为空数组。 |
 | `raw` | unknown | 未归一化的厂商原始响应。 |
 
+### 结构化输出 Schema
+
+- 每个工具现在都会在 MCP tool 元数据中发布完整的 `outputSchema`。
+- 适配器在返回结果前，会先按该工具的 `outputSchema` 校验归一化外壳。
+- 如果校验失败，调用会抛出 MCP 工具错误，而不是返回部分有效的外壳。
+
+### 结构化输入 Schema
+
+- 现在每个工具的输入 schema 都统一维护在一个注册表模块：
+  `src/types/toolInputSchemas.ts`。
+- `src/server.ts` 中的工具注册会直接引用该注册表，而不再为每个工具内联
+  定义 input schema。
+- 下拉词工具的平台枚举也已在该注册表集中维护，避免注册元数据与 handler
+  校验之间出现漂移。
+
 ### 错误行为
 
 工具调用失败时，当前实现通常直接抛出 MCP 工具错误，而不是返回
@@ -179,9 +194,11 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 
 ```ts
 import type {
+  GetKeywordMetrics5118Input,
   GetKeywordMetrics5118Data,
   GetKeywordMetrics5118Item,
   GetLongtailKeywords5118Data,
+  GetSuggestTerms5118Input,
   PaginationInfo,
   ResponseEnvelope,
 } from "5118-seo-adapter/types";

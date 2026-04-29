@@ -7,7 +7,11 @@ import { getLongtailKeywords5118Handler } from "../src/tools/getLongtailKeywords
 import { getSiteWeight5118Handler } from "../src/tools/getSiteWeight5118.js";
 import { getSuggestTerms5118Handler } from "../src/tools/getSuggestTerms5118.js";
 import { ToolError } from "../src/lib/errorMapper.js";
-import { jsonResponse, readFixture } from "./testUtils.js";
+import {
+  assertEnvelopeMatchesOutputSchema,
+  jsonResponse,
+  readFixture,
+} from "./testUtils.js";
 
 const ENV_SNAPSHOT = { ...process.env };
 
@@ -44,6 +48,7 @@ describe("sync tools", () => {
     expect(result.pagination?.total).toBe(1);
     expect(result.data?.keywords[0]?.keyword).toBe("比特币是什么");
     expect(result.raw).toEqual(fixture);
+    assertEnvelopeMatchesOutputSchema("get_longtail_keywords_5118", result);
   });
 
   it("exposes detailed longtail and suggest fields in normalized data", async () => {
@@ -125,6 +130,7 @@ describe("sync tools", () => {
       kuaishouIndex: 580,
       weiboIndex: 320,
     });
+    assertEnvelopeMatchesOutputSchema("get_longtail_keywords_5118", longtailResult);
 
     const suggestResult = await getSuggestTerms5118Handler({
       word: "国庆",
@@ -138,6 +144,7 @@ describe("sync tools", () => {
       platform: "zhihu",
       addTime: "2022-09-24T11:28:10.027",
     });
+    assertEnvelopeMatchesOutputSchema("get_suggest_terms_5118", suggestResult);
   });
 
   it("rejects longtail page size over the limit", async () => {
@@ -156,6 +163,7 @@ describe("sync tools", () => {
     const result = await getIndustryFrequencyWords5118Handler({ keyword: "比特币" });
     expect(result.data?.frequencyWords.length).toBe(2);
     expect(result.data?.frequencyWords[0]?.word).toBe("比特币");
+    assertEnvelopeMatchesOutputSchema("get_industry_frequency_words_5118", result);
   });
 
   it("returns normalized suggest terms", async () => {
@@ -169,6 +177,7 @@ describe("sync tools", () => {
 
     expect(result.data?.suggestions.length).toBe(2);
     expect(result.data?.suggestions[0]?.term).toBe("比特币价格");
+    assertEnvelopeMatchesOutputSchema("get_suggest_terms_5118", result);
   });
 
   it("returns normalized domain rank keywords, bid keywords, and site weights", async () => {
@@ -201,6 +210,7 @@ describe("sync tools", () => {
       bidCompanyCount: 317,
       recommendedBidAvg: 3.25,
     });
+    assertEnvelopeMatchesOutputSchema("get_domain_rank_keywords_5118", domainResult);
 
     const bidResult = await getBidKeywords5118Handler({
       url: "example.com",
@@ -219,6 +229,7 @@ describe("sync tools", () => {
       totalBidCompanyCount: 45,
       recommendedBidAvg: 4.65,
     });
+    assertEnvelopeMatchesOutputSchema("get_bid_keywords_5118", bidResult);
 
     const weightResult = await getSiteWeight5118Handler({ url: "example.com" });
 
@@ -227,6 +238,7 @@ describe("sync tools", () => {
       { type: "BaiduMobileWeight", weight: "5-" },
       { type: "SMWeight", weight: "8+" },
     ]);
+    assertEnvelopeMatchesOutputSchema("get_site_weight_5118", weightResult);
   });
 
   it("rejects bid keyword page size over the limit", async () => {

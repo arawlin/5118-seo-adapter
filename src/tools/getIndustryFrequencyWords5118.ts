@@ -5,7 +5,7 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeIndustryFrequencyWordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { FrequencyWordsData } from "../types/toolDataContracts.js";
+import type { FrequencyWordsData } from "../types/toolOutputSchemas.js";
 
 export interface GetIndustryFrequencyWordsInput {
   keyword: string;

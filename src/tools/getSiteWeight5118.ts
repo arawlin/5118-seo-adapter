@@ -5,7 +5,7 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeSiteWeightResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { SiteWeightData } from "../types/toolDataContracts.js";
+import type { SiteWeightData } from "../types/toolOutputSchemas.js";
 
 export interface GetSiteWeightInput {
   url: string;

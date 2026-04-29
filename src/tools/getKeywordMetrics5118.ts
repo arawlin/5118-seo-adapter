@@ -8,7 +8,7 @@ import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeKeywordMetricsResponse } from "../normalizers/keywordMetrics.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { KeywordMetricsData } from "../types/toolDataContracts.js";
+import type { KeywordMetricsData } from "../types/toolOutputSchemas.js";
 
 export interface GetKeywordMetricsInput extends AsyncControlInput {
   keywords?: string[];

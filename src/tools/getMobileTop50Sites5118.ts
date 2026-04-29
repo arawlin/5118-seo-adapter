@@ -1,6 +1,6 @@
 import { createTopSiteSnapshotHandler, type TopSiteSnapshotInput } from "./topSiteSnapshotBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { TopSiteSnapshotsData } from "../types/toolDataContracts.js";
+import type { TopSiteSnapshotsData } from "../types/toolOutputSchemas.js";
 
 export type GetMobileTop50SitesInput = TopSiteSnapshotInput;
 

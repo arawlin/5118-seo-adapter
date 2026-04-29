@@ -5,7 +5,7 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeLongtailKeywordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { LongtailKeywordsData } from "../types/toolDataContracts.js";
+import type { LongtailKeywordsData } from "../types/toolOutputSchemas.js";
 
 export interface GetLongtailKeywordsInput {
   keyword: string;

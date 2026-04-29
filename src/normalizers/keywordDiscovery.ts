@@ -4,7 +4,7 @@ import type {
   FrequencyWordsData,
   LongtailKeywordsData,
   SuggestTermsData,
-} from "../types/toolDataContracts.js";
+} from "../types/toolOutputSchemas.js";
 
 function toNumber(value: unknown): number | null {
   if (value === undefined || value === null || value === "") {

@@ -5,7 +5,7 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeBidSitesResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { BidSitesData } from "../types/toolDataContracts.js";
+import type { BidSitesData } from "../types/toolOutputSchemas.js";
 
 export interface GetBidSitesInput {
   keyword: string;

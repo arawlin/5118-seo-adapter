@@ -4,7 +4,11 @@ import { ToolError } from "../src/lib/errorMapper.js";
 import { getBidSites5118Handler } from "../src/tools/getBidSites5118.js";
 import { getMobileSiteRankKeywords5118Handler } from "../src/tools/getMobileSiteRankKeywords5118.js";
 import { getPcSiteRankKeywords5118Handler } from "../src/tools/getPcSiteRankKeywords5118.js";
-import { jsonResponse, readFixture } from "./testUtils.js";
+import {
+  assertEnvelopeMatchesOutputSchema,
+  jsonResponse,
+  readFixture,
+} from "./testUtils.js";
 
 const ENV_SNAPSHOT = { ...process.env };
 
@@ -57,6 +61,7 @@ describe("wave 2 sync tools", () => {
       semPrice: "0.35~4.57",
       recommendedBidAvg: 3.25,
     });
+    assertEnvelopeMatchesOutputSchema("get_pc_site_rank_keywords_5118", pcResult);
 
     const mobileResult = await getMobileSiteRankKeywords5118Handler({
       url: "m.example.com",
@@ -74,6 +79,7 @@ describe("wave 2 sync tools", () => {
       mobileIndex: 919,
       googleIndex: 12100,
     });
+    assertEnvelopeMatchesOutputSchema("get_mobile_site_rank_keywords_5118", mobileResult);
 
     const bidSiteResult = await getBidSites5118Handler({
       keyword: "SEO优化",
@@ -94,6 +100,7 @@ describe("wave 2 sync tools", () => {
       lastSeenAt: "2023-11-23T22:04:00",
       firstSeenAt: "2020-12-22T22:03:00",
     });
+    assertEnvelopeMatchesOutputSchema("get_bid_sites_5118", bidSiteResult);
   });
 
   it("enforces sync wave 2 input limits", async () => {

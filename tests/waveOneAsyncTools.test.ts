@@ -6,7 +6,11 @@ import { ToolError } from "../src/lib/errorMapper.js";
 import { getKeywordMetrics5118Handler } from "../src/tools/getKeywordMetrics5118.js";
 import { getMobileTrafficKeywords5118Handler } from "../src/tools/getMobileTrafficKeywords5118.js";
 import { getPcRankSnapshot5118Handler } from "../src/tools/getPcRankSnapshot5118.js";
-import { jsonResponse, readFixture } from "./testUtils.js";
+import {
+  assertEnvelopeMatchesOutputSchema,
+  jsonResponse,
+  readFixture,
+} from "./testUtils.js";
 
 const ENV_SNAPSHOT = { ...process.env };
 
@@ -42,6 +46,7 @@ describe("async tools", () => {
 
     expect(result.executionStatus).toBe("pending");
     expect(result.taskId).toBe(40724567);
+    assertEnvelopeMatchesOutputSchema("get_keyword_metrics_5118", result);
   });
 
   it("treats submit success with taskid as pending when data is not ready", async () => {
@@ -66,6 +71,7 @@ describe("async tools", () => {
     expect(result.executionStatus).toBe("pending");
     expect(result.taskId).toBe(40724567);
     expect(result.data).toBeNull();
+    assertEnvelopeMatchesOutputSchema("get_keyword_metrics_5118", result);
   });
 
   it("completes keyword metrics in wait mode", async () => {
@@ -92,6 +98,7 @@ describe("async tools", () => {
 
     expect(result.executionStatus).toBe("completed");
     expect(result.data?.items[0]?.keyword).toBe("比特币价格");
+    assertEnvelopeMatchesOutputSchema("get_keyword_metrics_5118", result);
   });
 
   it("exposes detailed metrics and traffic fields in normalized data", async () => {
@@ -189,6 +196,7 @@ describe("async tools", () => {
       sexFemale: 51.29,
       bidReason: "高频热搜词",
     });
+    assertEnvelopeMatchesOutputSchema("get_keyword_metrics_5118", metricsResult);
 
     const trafficResult = await getMobileTrafficKeywords5118Handler({
       keyword: "比特币",
@@ -206,6 +214,7 @@ describe("async tools", () => {
       rank: 3,
       url: "https://example.com/btc",
     });
+    assertEnvelopeMatchesOutputSchema("get_mobile_traffic_keywords_5118", trafficResult);
   });
 
   it("requires keyword when traffic tool is polled", async () => {
@@ -229,6 +238,7 @@ describe("async tools", () => {
 
     expect(result.executionStatus).toBe("pending");
     expect(result.taskId).toBe(50724567);
+    assertEnvelopeMatchesOutputSchema("get_mobile_traffic_keywords_5118", result);
   });
 
   it("enforces traffic page size limit", async () => {
@@ -254,6 +264,7 @@ describe("async tools", () => {
 
     expect(result.executionStatus).toBe("pending");
     expect(result.taskId).toBe(123456);
+    assertEnvelopeMatchesOutputSchema("get_pc_rank_snapshot_5118", result);
   });
 
   it("completes PC and mobile rank snapshots", async () => {
@@ -317,6 +328,7 @@ describe("async tools", () => {
       top100: 5200,
       siteWeight: "6",
     });
+    assertEnvelopeMatchesOutputSchema("get_pc_rank_snapshot_5118", pcResult);
 
     const mobileResult = await getMobileRankSnapshot5118Handler({
       taskId: 123457,
@@ -334,6 +346,7 @@ describe("async tools", () => {
       rank: 2,
       siteWeight: "5",
     });
+    assertEnvelopeMatchesOutputSchema("get_mobile_rank_snapshot_5118", mobileResult);
   });
 
   it("supports URL indexing submit pending and wait completion", async () => {
@@ -356,6 +369,7 @@ describe("async tools", () => {
 
     expect(submitResult.executionStatus).toBe("pending");
     expect(submitResult.taskId).toBe(223344);
+    assertEnvelopeMatchesOutputSchema("check_url_indexing_5118", submitResult);
 
     const waitResult = await checkUrlIndexing5118Handler({
       urls: ["https://www.example.com/page1", "https://www.example.com/page2"],
@@ -377,6 +391,7 @@ describe("async tools", () => {
       title: "Example Page 1",
       snapshotTime: "2017-10-11 03:07:00",
     });
+    assertEnvelopeMatchesOutputSchema("check_url_indexing_5118", waitResult);
   });
 
   it("enforces indexing URL limit and rank snapshot checkRow limit", async () => {

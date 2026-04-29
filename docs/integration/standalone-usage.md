@@ -159,6 +159,23 @@ Every tool returns a unified envelope:
 | `warnings` | string[] | Non-fatal adapter warnings. Currently usually empty. |
 | `raw` | unknown | Original vendor payload without normalization. |
 
+### Structured Output Schema
+
+- Every tool now publishes a full `outputSchema` in MCP tool metadata.
+- Before a tool result is returned, the adapter validates the normalized
+  envelope against that tool's `outputSchema`.
+- If the validation fails, the call throws an MCP tool error instead of
+  returning a partially valid envelope.
+
+### Structured Input Schema
+
+- Every tool input schema is now maintained in one registry module:
+  `src/types/toolInputSchemas.ts`.
+- Tool registration in `src/server.ts` references this registry directly,
+  instead of using per-tool inline input schema objects.
+- The suggest platform enum values are also centralized in that registry to
+  avoid drift between registration metadata and handler validation.
+
 ### Error Behavior
 
 Tool failures are normally raised as MCP tool errors instead of returning an
@@ -182,9 +199,11 @@ External consumers can now import the stable normalized contracts from one path:
 
 ```ts
 import type {
+  GetKeywordMetrics5118Input,
   GetKeywordMetrics5118Data,
   GetKeywordMetrics5118Item,
   GetLongtailKeywords5118Data,
+  GetSuggestTerms5118Input,
   PaginationInfo,
   ResponseEnvelope,
 } from "5118-seo-adapter/types";

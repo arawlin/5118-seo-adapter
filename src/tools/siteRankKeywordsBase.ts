@@ -4,7 +4,7 @@ import { postForm } from "../lib/http5118Client.js";
 import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { SiteRankKeywordsData } from "../types/toolDataContracts.js";
+import type { SiteRankKeywordsData } from "../types/toolOutputSchemas.js";
 
 export interface SiteRankKeywordsInput {
   url: string;

@@ -8,7 +8,7 @@ import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeUrlIndexingResponse } from "../normalizers/siteInsights.js";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { UrlIndexingData } from "../types/toolDataContracts.js";
+import type { UrlIndexingData } from "../types/toolOutputSchemas.js";
 
 export interface CheckUrlIndexingInput extends AsyncControlInput {
   urls?: string[];

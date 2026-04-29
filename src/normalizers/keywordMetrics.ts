@@ -3,7 +3,7 @@ import type { PaginationInfo } from "../types/toolContracts.js";
 import type {
   KeywordMetricsData,
   MobileTrafficKeywordsData,
-} from "../types/toolDataContracts.js";
+} from "../types/toolOutputSchemas.js";
 
 function toNumber(value: unknown): number | null {
   if (value === undefined || value === null || value === "") {

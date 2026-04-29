@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../src/lib/errorMapper.js";
 import { getMobileTop50Sites5118Handler } from "../src/tools/getMobileTop50Sites5118.js";
 import { getPcTop50Sites5118Handler } from "../src/tools/getPcTop50Sites5118.js";
-import { jsonResponse, readFixture } from "./testUtils.js";
+import {
+  assertEnvelopeMatchesOutputSchema,
+  jsonResponse,
+  readFixture,
+} from "./testUtils.js";
 
 const ENV_SNAPSHOT = { ...process.env };
 
@@ -34,6 +38,7 @@ describe("wave 2 async tools", () => {
 
     expect(result.executionStatus).toBe("pending");
     expect(result.taskId).toBe(223355);
+    assertEnvelopeMatchesOutputSchema("get_pc_top50_sites_5118", result);
   });
 
   it("completes PC and mobile top50 site snapshots", async () => {
@@ -72,6 +77,7 @@ describe("wave 2 async tools", () => {
       top100: 5200,
       siteWeight: "6",
     });
+    assertEnvelopeMatchesOutputSchema("get_pc_top50_sites_5118", pcResult);
 
     const mobileResult = await getMobileTop50Sites5118Handler({
       taskId: 223356,
@@ -93,6 +99,7 @@ describe("wave 2 async tools", () => {
       pageUrl: "https://m.example.com/seo",
       siteWeight: "5",
     });
+    assertEnvelopeMatchesOutputSchema("get_mobile_top50_sites_5118", mobileResult);
   });
 
   it("enforces top50 input limits", async () => {

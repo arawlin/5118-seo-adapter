@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import { API_TOOL_NAMES } from "./config/apiKeyRegistry.js";
 import { checkUrlIndexing5118Handler } from "./tools/checkUrlIndexing5118.js";
 import { getBidKeywords5118Handler } from "./tools/getBidKeywords5118.js";
@@ -16,10 +15,12 @@ import { getPcRankSnapshot5118Handler } from "./tools/getPcRankSnapshot5118.js";
 import { getPcSiteRankKeywords5118Handler } from "./tools/getPcSiteRankKeywords5118.js";
 import { getPcTop50Sites5118Handler } from "./tools/getPcTop50Sites5118.js";
 import { getSiteWeight5118Handler } from "./tools/getSiteWeight5118.js";
+import { getSuggestTerms5118Handler } from "./tools/getSuggestTerms5118.js";
+import { TOOL_INPUT_SCHEMAS } from "./types/toolInputSchemas.js";
 import {
-  getSuggestTerms5118Handler,
-  SUGGEST_PLATFORM_VALUES,
-} from "./tools/getSuggestTerms5118.js";
+  TOOL_OUTPUT_SCHEMAS,
+  validateToolOutputEnvelope,
+} from "./types/toolOutputSchemas.js";
 
 export const REGISTERED_TOOL_NAMES = API_TOOL_NAMES;
 
@@ -39,9 +40,27 @@ const COMMON_PAGINATION_FIELDS_DESCRIPTION =
 
 const ASYNC_RESPONSE_STATE_DESCRIPTION =
   "Async state rule: data=null while executionStatus=pending; completed tasks return normalized data; failed tasks surface executionStatus=failed plus warnings or raw vendor details.";
+type RegisteredToolName = (typeof REGISTERED_TOOL_NAMES)[number];
+type RegisterToolMethod = McpServer["registerTool"];
 
-function toToolResult(payload: unknown) {
-  const structuredContent = payload as Record<string, unknown>;
+function toToolResult(toolName: RegisteredToolName, payload: unknown) {
+  const validationResult = validateToolOutputEnvelope(toolName, payload);
+
+  if (!validationResult.success) {
+    const issueSummary = validationResult.error.issues
+      .slice(0, 5)
+      .map((issue) => {
+        const issuePath = issue.path.length > 0 ? issue.path.join(".") : "<root>";
+        return `${issuePath}: ${issue.message}`;
+      })
+      .join("; ");
+
+    throw new Error(
+      `Output schema validation failed for ${toolName}: ${issueSummary}`,
+    );
+  }
+
+  const structuredContent = validationResult.data;
 
   return {
     content: [
@@ -54,20 +73,26 @@ function toToolResult(payload: unknown) {
   };
 }
 
-type RegisteredToolName = (typeof REGISTERED_TOOL_NAMES)[number];
-type RegisterToolMethod = McpServer["registerTool"];
-
 function createToolRegistrar(server: McpServer) {
   const registeredToolNames = new Set<RegisteredToolName>();
 
   const registerTool: RegisterToolMethod = (name, config, handler) => {
-
     if (!REGISTERED_TOOL_NAMES.includes(name as RegisteredToolName)) {
       throw new Error(`Unsupported tool registration: ${name}.`);
     }
 
     registeredToolNames.add(name as RegisteredToolName);
-    return server.registerTool(name, config, handler);
+
+    const resolvedConfig = {
+      title: config.title,
+      description: config.description,
+      inputSchema: config.inputSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS[name as RegisteredToolName],
+      annotations: config.annotations,
+      _meta: config._meta,
+    };
+
+    return server.registerTool(name, resolvedConfig, handler);
   };
 
   function assertToolCoverage(): void {
@@ -129,43 +154,13 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        keyword: z
-          .string()
-          .min(1)
-          .describe("Required seed keyword. This is the root term that 5118 expands into long-tail keywords."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based result page number. Use it to read a later page of normalized keywords. Defaults to 1."),
-        pageSize: z
-          .number()
-          .int()
-          .positive()
-          .max(100)
-          .optional()
-          .describe("Optional number of rows per page. Maximum 100. Larger values return more keywords per request."),
-        sortField: z
-          .string()
-          .optional()
-          .describe("Optional vendor sort selector. Common values: 2=bidCompanyCount advertiser count, 3=longKeywordCount long-tail count, 4=index PC search index, 5=mobileIndex mobile search index."),
-        sortType: z
-          .enum(["asc", "desc"])
-          .optional()
-          .describe("Optional sort direction for sortField. asc=low to high, desc=high to low."),
-        filter: z
-          .string()
-          .optional()
-          .describe("Optional vendor quick filter selector. Common values: 1=all results, 2=traffic words, 9=keywords with bidding ads."),
-        filterDate: z
-          .string()
-          .optional()
-          .describe("Optional vendor filter date in yyyy-MM-dd format. Use it when you need a specific date snapshot supported by 5118."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_longtail_keywords_5118,
     },
-    async (input) => toToolResult(await getLongtailKeywords5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_longtail_keywords_5118",
+        await getLongtailKeywords5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -182,14 +177,13 @@ export function createServer(): McpServer {
           frequencyWords: [{ word: "做法", ratio: 5.58, count: 46826 }],
         }),
       ),
-      inputSchema: {
-        keyword: z
-          .string()
-          .min(1)
-          .describe("Required industry or topic seed keyword. 5118 uses it to calculate frequently co-occurring industry words."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_industry_frequency_words_5118,
     },
-    async (input) => toToolResult(await getIndustryFrequencyWords5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_industry_frequency_words_5118",
+        await getIndustryFrequencyWords5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -212,17 +206,10 @@ export function createServer(): McpServer {
           }],
         }),
       ),
-      inputSchema: {
-        word: z
-          .string()
-          .min(1)
-          .describe("Required seed word used to query related suggestion terms from the selected platform."),
-        platform: z
-          .enum(SUGGEST_PLATFORM_VALUES)
-          .describe("Required official vendor platform enum. Examples include baidu, baidumobile, zhihu, douyin, and amazon. The platform changes the suggestion corpus."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_suggest_terms_5118,
     },
-    async (input) => toToolResult(await getSuggestTerms5118Handler(input)),
+    async (input) =>
+      toToolResult("get_suggest_terms_5118", await getSuggestTerms5118Handler(input)),
   );
 
   registerTool(
@@ -276,33 +263,10 @@ export function createServer(): McpServer {
           }],
         }),
       ),
-      inputSchema: {
-        keywords: z
-          .array(z.string().min(1))
-          .max(50)
-          .optional()
-          .describe("Optional keyword list to submit to 5118. Required for submit mode, and also required for wait mode when taskId is not provided. Maximum 50 keywords per task."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task and return taskId; poll=query an existing task by taskId; wait=submit or resume a task and keep polling until completion or timeout."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling an already-created task."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode. The tool stops polling and returns the latest pending state when this limit is reached."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds when omitted."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_keyword_metrics_5118,
     },
-    async (input) => toToolResult(await getKeywordMetrics5118Handler(input)),
+    async (input) =>
+      toToolResult("get_keyword_metrics_5118", await getKeywordMetrics5118Handler(input)),
   );
 
   registerTool(
@@ -343,46 +307,13 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same completed result page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        keyword: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional seed keyword to mine. Required for submit mode, and also required for poll mode because the upstream 5118 poll request still expects the original keyword."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based page number for completed traffic keyword results. Defaults to 1."),
-        pageSize: z
-          .number()
-          .int()
-          .positive()
-          .max(500)
-          .optional()
-          .describe("Optional completed result page size. Maximum 500. Defaults to 20."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout. Defaults to submit for this long-running API."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode before timeout. The tool returns the latest pending state if the limit is reached first."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to the shared async poll interval when omitted."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_mobile_traffic_keywords_5118,
     },
-    async (input) => toToolResult(await getMobileTrafficKeywords5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_mobile_traffic_keywords_5118",
+        await getMobileTrafficKeywords5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -418,20 +349,13 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .describe("Required domain or host to inspect for PC ranking keywords, including subdomains when supported by 5118."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based result page number. Defaults to 1."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_domain_rank_keywords_5118,
     },
-    async (input) => toToolResult(await getDomainRankKeywords5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_domain_rank_keywords_5118",
+        await getDomainRankKeywords5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -475,31 +399,10 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .describe("Required domain or host to inspect for bid keywords."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based result page number. Defaults to 1."),
-        pageSize: z
-          .number()
-          .int()
-          .positive()
-          .max(500)
-          .optional()
-          .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
-        includeHighlight: z
-          .boolean()
-          .optional()
-          .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_bid_keywords_5118,
     },
-    async (input) => toToolResult(await getBidKeywords5118Handler(input)),
+    async (input) =>
+      toToolResult("get_bid_keywords_5118", await getBidKeywords5118Handler(input)),
   );
 
   registerTool(
@@ -519,14 +422,9 @@ export function createServer(): McpServer {
           ],
         }),
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .describe("Required domain or host to inspect for 5118 weight values."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_site_weight_5118,
     },
-    async (input) => toToolResult(await getSiteWeight5118Handler(input)),
+    async (input) => toToolResult("get_site_weight_5118", await getSiteWeight5118Handler(input)),
   );
 
   registerTool(
@@ -575,45 +473,10 @@ export function createServer(): McpServer {
           }],
         }),
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional target domain for submit or wait mode. Required unless taskId is used to resume polling."),
-        keywords: z
-          .array(z.string().min(1))
-          .max(50)
-          .optional()
-          .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
-        checkRow: z
-          .number()
-          .int()
-          .positive()
-          .max(50)
-          .optional()
-          .describe("Optional maximum ranking depth to inspect. Maximum 50 for the PC endpoint."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_pc_rank_snapshot_5118,
     },
-    async (input) => toToolResult(await getPcRankSnapshot5118Handler(input)),
+    async (input) =>
+      toToolResult("get_pc_rank_snapshot_5118", await getPcRankSnapshot5118Handler(input)),
   );
 
   registerTool(
@@ -655,45 +518,13 @@ export function createServer(): McpServer {
           }],
         }),
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional target domain for submit or wait mode. Required unless taskId is used to resume polling."),
-        keywords: z
-          .array(z.string().min(1))
-          .max(50)
-          .optional()
-          .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
-        checkRow: z
-          .number()
-          .int()
-          .positive()
-          .max(100)
-          .optional()
-          .describe("Optional maximum ranking depth to inspect. Maximum 100 for the mobile endpoint."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_mobile_rank_snapshot_5118,
     },
-    async (input) => toToolResult(await getMobileRankSnapshot5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_mobile_rank_snapshot_5118",
+        await getMobileRankSnapshot5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -729,33 +560,10 @@ export function createServer(): McpServer {
           finishedTime: "1507812960",
         }),
       ),
-      inputSchema: {
-        urls: z
-          .array(z.string().min(1))
-          .max(200)
-          .optional()
-          .describe("Optional URL list to submit for indexing checks. Required unless taskId is used to resume polling. Maximum 200 URLs per task."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.check_url_indexing_5118,
     },
-    async (input) => toToolResult(await checkUrlIndexing5118Handler(input)),
+    async (input) =>
+      toToolResult("check_url_indexing_5118", await checkUrlIndexing5118Handler(input)),
   );
 
   registerTool(
@@ -796,20 +604,13 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .describe("Required domain or host to inspect for PC site rank keywords."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based result page number. Defaults to 1."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_pc_site_rank_keywords_5118,
     },
-    async (input) => toToolResult(await getPcSiteRankKeywords5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_pc_site_rank_keywords_5118",
+        await getPcSiteRankKeywords5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -850,20 +651,13 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        url: z
-          .string()
-          .min(1)
-          .describe("Required domain or host to inspect for mobile site rank keywords."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based result page number. Defaults to 1."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_mobile_site_rank_keywords_5118,
     },
-    async (input) => toToolResult(await getMobileSiteRankKeywords5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_mobile_site_rank_keywords_5118",
+        await getMobileSiteRankKeywords5118Handler(input),
+      ),
   );
 
   registerTool(
@@ -899,31 +693,9 @@ export function createServer(): McpServer {
         "The top-level pagination field and data.pagination describe the same page window.",
         COMMON_PAGINATION_FIELDS_DESCRIPTION,
       ),
-      inputSchema: {
-        keyword: z
-          .string()
-          .min(1)
-          .describe("Required bid keyword used to discover advertising domains and landing pages."),
-        pageIndex: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Optional 1-based result page number. Defaults to 1."),
-        pageSize: z
-          .number()
-          .int()
-          .positive()
-          .max(500)
-          .optional()
-          .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
-        includeHighlight: z
-          .boolean()
-          .optional()
-          .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_bid_sites_5118,
     },
-    async (input) => toToolResult(await getBidSites5118Handler(input)),
+    async (input) => toToolResult("get_bid_sites_5118", await getBidSites5118Handler(input)),
   );
 
   registerTool(
@@ -971,40 +743,10 @@ export function createServer(): McpServer {
           }],
         }),
       ),
-      inputSchema: {
-        keywords: z
-          .array(z.string().min(1))
-          .max(50)
-          .optional()
-          .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
-        checkRow: z
-          .number()
-          .int()
-          .positive()
-          .max(100)
-          .optional()
-          .describe("Optional maximum ranking depth to inspect. Maximum 100 for the PC endpoint."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_pc_top50_sites_5118,
     },
-    async (input) => toToolResult(await getPcTop50Sites5118Handler(input)),
+    async (input) =>
+      toToolResult("get_pc_top50_sites_5118", await getPcTop50Sites5118Handler(input)),
   );
 
   registerTool(
@@ -1045,40 +787,13 @@ export function createServer(): McpServer {
           }],
         }),
       ),
-      inputSchema: {
-        keywords: z
-          .array(z.string().min(1))
-          .max(50)
-          .optional()
-          .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
-        checkRow: z
-          .number()
-          .int()
-          .positive()
-          .max(100)
-          .optional()
-          .describe("Optional maximum ranking depth to inspect. Maximum 100 for the mobile endpoint."),
-        executionMode: z
-          .enum(["submit", "poll", "wait"])
-          .optional()
-          .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
-        taskId: z
-          .union([z.string(), z.number()])
-          .optional()
-          .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
-        maxWaitSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional maximum client-side wait time in seconds for wait mode."),
-        pollIntervalSeconds: z
-          .number()
-          .positive()
-          .optional()
-          .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
-      },
+      inputSchema: TOOL_INPUT_SCHEMAS.get_mobile_top50_sites_5118,
     },
-    async (input) => toToolResult(await getMobileTop50Sites5118Handler(input)),
+    async (input) =>
+      toToolResult(
+        "get_mobile_top50_sites_5118",
+        await getMobileTop50Sites5118Handler(input),
+      ),
   );
 
   assertToolCoverage();

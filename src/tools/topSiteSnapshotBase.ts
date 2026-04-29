@@ -8,7 +8,7 @@ import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeTopSiteSnapshotsResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { TopSiteSnapshotsData } from "../types/toolDataContracts.js";
+import type { TopSiteSnapshotsData } from "../types/toolOutputSchemas.js";
 
 const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 60;
 

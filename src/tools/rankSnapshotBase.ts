@@ -8,7 +8,7 @@ import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeRankSnapshotResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { RankSnapshotData } from "../types/toolDataContracts.js";
+import type { RankSnapshotData } from "../types/toolOutputSchemas.js";
 
 const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 60;
 

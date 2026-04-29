@@ -1,7 +1,7 @@
 import { normalizeMobileSiteRankKeywordsResponse } from "../normalizers/siteInsights.js";
 import { createSiteRankKeywordsHandler, type SiteRankKeywordsInput } from "./siteRankKeywordsBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { SiteRankKeywordsData } from "../types/toolDataContracts.js";
+import type { SiteRankKeywordsData } from "../types/toolOutputSchemas.js";
 
 export type GetMobileSiteRankKeywordsInput = SiteRankKeywordsInput;
 

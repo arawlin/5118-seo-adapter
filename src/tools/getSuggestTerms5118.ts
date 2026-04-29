@@ -5,40 +5,22 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeSuggestTermsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import type { SuggestTermsData } from "../types/toolDataContracts.js";
+import type { SuggestTermsData } from "../types/toolOutputSchemas.js";
+import {
+  SUGGEST_PLATFORM_VALUES,
+  type GetSuggestTerms5118Input,
+  type SuggestPlatform,
+} from "../types/toolInputSchemas.js";
 
-export const SUGGEST_PLATFORM_VALUES = [
-  "baidu",
-  "baidumobile",
-  "shenma",
-  "360",
-  "360mobile",
-  "sogou",
-  "sogoumobile",
-  "zhihu",
-  "toutiao",
-  "taobao",
-  "tmall",
-  "pinduoduo",
-  "jingdong",
-  "douyin",
-  "amazon",
-  "xiaohongshu",
-] as const;
-
-export type SuggestPlatform = (typeof SUGGEST_PLATFORM_VALUES)[number];
-
-export interface GetSuggestTermsInput {
-  word: string;
-  platform: SuggestPlatform;
-}
+export type GetSuggestTermsInput = GetSuggestTerms5118Input;
+export type { SuggestPlatform };
 
 const TOOL_NAME = "get_suggest_terms_5118";
 const API_NAME = "Suggestion Mining";
 const ENDPOINT = "/suggest/list";
 
 export async function getSuggestTerms5118Handler(
-  input: GetSuggestTermsInput,
+  input: GetSuggestTerms5118Input,
 ): Promise<ResponseEnvelope<SuggestTermsData>> {
   if (!SUGGEST_PLATFORM_VALUES.includes(input.platform)) {
     throw new ToolError("INVALID_INPUT", "platform is not in the allowed vendor enum set.");
