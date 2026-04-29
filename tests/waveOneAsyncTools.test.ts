@@ -1,7 +1,11 @@
+/// <reference types="node" />
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { checkUrlIndexing5118Handler } from "../src/tools/checkUrlIndexing5118.js";
+import { getMobileRankSnapshot5118Handler } from "../src/tools/getMobileRankSnapshot5118.js";
 import { ToolError } from "../src/lib/errorMapper.js";
 import { getKeywordMetrics5118Handler } from "../src/tools/getKeywordMetrics5118.js";
 import { getMobileTrafficKeywords5118Handler } from "../src/tools/getMobileTrafficKeywords5118.js";
+import { getPcRankSnapshot5118Handler } from "../src/tools/getPcRankSnapshot5118.js";
 import { jsonResponse, readFixture } from "./testUtils.js";
 
 const ENV_SNAPSHOT = { ...process.env };
@@ -9,6 +13,9 @@ const ENV_SNAPSHOT = { ...process.env };
 function applyTestApiEnv(): void {
   process.env.API_5118_KW_PARAM_V2 = "k-kw-param";
   process.env.API_5118_TRAFFIC = "k-traffic";
+  process.env.API_5118_RANK_PC = "k-rank-pc";
+  process.env.API_5118_RANK_MOBILE = "k-rank-mobile";
+  process.env.API_5118_INCLUDE = "k-include";
 }
 
 describe("async tools", () => {
@@ -230,6 +237,162 @@ describe("async tools", () => {
         keyword: "比特币",
         executionMode: "submit",
         pageSize: 501,
+      }),
+    ).rejects.toBeInstanceOf(ToolError);
+  });
+
+  it("returns pending for PC rank snapshot submit", async () => {
+    const submitFixture = await readFixture<Record<string, unknown>>("rank-pc.submit.json");
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(submitFixture)));
+
+    const result = await getPcRankSnapshot5118Handler({
+      url: "example.com",
+      keywords: ["SEO优化"],
+      executionMode: "submit",
+    });
+
+    expect(result.executionStatus).toBe("pending");
+    expect(result.taskId).toBe(123456);
+  });
+
+  it("completes PC and mobile rank snapshots", async () => {
+    const submitFixture = await readFixture<Record<string, unknown>>("rank-pc.submit.json");
+    const successFixture = await readFixture<Record<string, unknown>>("rank-pc.success.json");
+
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse(submitFixture))
+        .mockResolvedValueOnce(jsonResponse(successFixture))
+        .mockResolvedValueOnce(
+          jsonResponse({
+            errcode: "0",
+            errmsg: "",
+            data: {
+              taskid: 123457,
+              keywordmonitor: [
+                {
+                  keyword: "SEO优化",
+                  search_engine: "baidumobile",
+                  ip: "1.2.3.5",
+                  area: "广东",
+                  network: "联通",
+                  ranks: [
+                    {
+                      site_url: "m.example.com",
+                      rank: 2,
+                      page_title: "移动SEO优化教程",
+                      page_url: "https://m.example.com/seo",
+                      top100: 4200,
+                      site_weight: "5"
+                    }
+                  ]
+                }
+              ]
+            }
+          }),
+        ),
+    );
+
+    const pcResult = await getPcRankSnapshot5118Handler({
+      url: "example.com",
+      keywords: ["SEO优化"],
+      executionMode: "wait",
+      maxWaitSeconds: 1,
+      pollIntervalSeconds: 0.001,
+    });
+
+    expect(pcResult.executionStatus).toBe("completed");
+    expect(pcResult.data?.rankings[0]).toMatchObject({
+      keyword: "SEO优化",
+      searchEngine: "baidupc",
+      area: "广东",
+      network: "电信",
+    });
+    expect(pcResult.data?.rankings[0]?.ranks[0]).toMatchObject({
+      siteUrl: "www.example.com",
+      rank: 1,
+      top100: 5200,
+      siteWeight: "6",
+    });
+
+    const mobileResult = await getMobileRankSnapshot5118Handler({
+      taskId: 123457,
+      executionMode: "poll",
+    });
+
+    expect(mobileResult.executionStatus).toBe("completed");
+    expect(mobileResult.data?.rankings[0]).toMatchObject({
+      searchEngine: "baidumobile",
+      ip: "1.2.3.5",
+      network: "联通",
+    });
+    expect(mobileResult.data?.rankings[0]?.ranks[0]).toMatchObject({
+      siteUrl: "m.example.com",
+      rank: 2,
+      siteWeight: "5",
+    });
+  });
+
+  it("supports URL indexing submit pending and wait completion", async () => {
+    const submitFixture = await readFixture<Record<string, unknown>>("include.submit.json");
+    const successFixture = await readFixture<Record<string, unknown>>("include.success.json");
+
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse(submitFixture))
+        .mockResolvedValueOnce(jsonResponse(submitFixture))
+        .mockResolvedValueOnce(jsonResponse(successFixture)),
+    );
+
+    const submitResult = await checkUrlIndexing5118Handler({
+      urls: ["https://www.example.com/page1", "https://www.example.com/page2"],
+      executionMode: "submit",
+    });
+
+    expect(submitResult.executionStatus).toBe("pending");
+    expect(submitResult.taskId).toBe(223344);
+
+    const waitResult = await checkUrlIndexing5118Handler({
+      urls: ["https://www.example.com/page1", "https://www.example.com/page2"],
+      executionMode: "wait",
+      maxWaitSeconds: 1,
+      pollIntervalSeconds: 0.001,
+    });
+
+    expect(waitResult.executionStatus).toBe("completed");
+    expect(waitResult.data).toMatchObject({
+      total: 2,
+      checkStatus: 1,
+      submitTime: "1507812930",
+      finishedTime: "1507812960",
+    });
+    expect(waitResult.data?.items[0]).toMatchObject({
+      url: "https://www.example.com/page1",
+      status: 1,
+      title: "Example Page 1",
+      snapshotTime: "2017-10-11 03:07:00",
+    });
+  });
+
+  it("enforces indexing URL limit and rank snapshot checkRow limit", async () => {
+    await expect(
+      checkUrlIndexing5118Handler({
+        urls: Array.from({ length: 201 }, (_, index) => `https://example.com/${String(index)}`),
+        executionMode: "submit",
+      }),
+    ).rejects.toBeInstanceOf(ToolError);
+
+    await expect(
+      getPcRankSnapshot5118Handler({
+        url: "example.com",
+        keywords: ["SEO优化"],
+        checkRow: 51,
+        executionMode: "submit",
       }),
     ).rejects.toBeInstanceOf(ToolError);
   });

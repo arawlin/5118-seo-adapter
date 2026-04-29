@@ -1,0 +1,25 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "taskid": 223344,
+    "total": 2,
+    "check_status": 1,
+    "submit_time": "1507812930",
+    "finished_time": "1507812960",
+    "include_result": [
+      {
+        "url": "https://www.example.com/page1",
+        "status": 1,
+        "title": "Example Page 1",
+        "time": "2017-10-11 03:07:00"
+      },
+      {
+        "url": "https://www.example.com/page2",
+        "status": 0,
+        "title": "Example Page 2",
+        "time": "2017-09-27 21:51:00"
+      }
+    ]
+  }
+}

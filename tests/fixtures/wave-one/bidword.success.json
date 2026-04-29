@@ -1,0 +1,32 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "total": 1200,
+    "page_count": 3,
+    "page_index": 1,
+    "page_size": 20,
+    "keywords": [
+      {
+        "keyword": "SEO优化",
+        "title": "竞价标题",
+        "intro": "竞价文案",
+        "bidword_semprice": "5.60",
+        "bidword_pcpv": 384,
+        "bidword_wisepv": 115,
+        "bidword_kwc": 1,
+        "index": 330,
+        "mobile_index": 212,
+        "haosou_index": 11,
+        "urlcount_30day": 15,
+        "urlcount": 45,
+        "firstfindtime": "2024-01-15",
+        "joindate": "2025-03-01",
+        "bidword_recommend_price_avg": 4.65,
+        "google_index": 1200,
+        "kuaishou_index": 35,
+        "weibo_index": 78
+      }
+    ]
+  }
+}

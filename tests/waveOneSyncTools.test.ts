@@ -1,6 +1,10 @@
+/// <reference types="node" />
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getBidKeywords5118Handler } from "../src/tools/getBidKeywords5118.js";
+import { getDomainRankKeywords5118Handler } from "../src/tools/getDomainRankKeywords5118.js";
 import { getIndustryFrequencyWords5118Handler } from "../src/tools/getIndustryFrequencyWords5118.js";
 import { getLongtailKeywords5118Handler } from "../src/tools/getLongtailKeywords5118.js";
+import { getSiteWeight5118Handler } from "../src/tools/getSiteWeight5118.js";
 import { getSuggestTerms5118Handler } from "../src/tools/getSuggestTerms5118.js";
 import { ToolError } from "../src/lib/errorMapper.js";
 import { jsonResponse, readFixture } from "./testUtils.js";
@@ -11,6 +15,9 @@ function applyTestApiEnv(): void {
   process.env.API_5118_LONGTAIL_V2 = "k-longtail";
   process.env.API_5118_FREQ_WORDS = "k-freq";
   process.env.API_5118_SUGGEST = "k-suggest";
+  process.env.API_5118_DOMAIN_V2 = "k-domain";
+  process.env.API_5118_BIDWORD_V2 = "k-bidword";
+  process.env.API_5118_WEIGHT = "k-weight";
 }
 
 describe("sync tools", () => {
@@ -162,5 +169,72 @@ describe("sync tools", () => {
 
     expect(result.data?.suggestions.length).toBe(2);
     expect(result.data?.suggestions[0]?.term).toBe("比特币价格");
+  });
+
+  it("returns normalized domain rank keywords, bid keywords, and site weights", async () => {
+    const domainFixture = await readFixture<Record<string, unknown>>("domain-rank.success.json");
+    const bidFixture = await readFixture<Record<string, unknown>>("bidword.success.json");
+    const weightFixture = await readFixture<Record<string, unknown>>("weight.success.json");
+
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse(domainFixture))
+        .mockResolvedValueOnce(jsonResponse(bidFixture))
+        .mockResolvedValueOnce(jsonResponse(weightFixture)),
+    );
+
+    const domainResult = await getDomainRankKeywords5118Handler({
+      url: "example.com",
+      pageIndex: 1,
+    });
+
+    expect(domainResult.executionStatus).toBe("completed");
+    expect(domainResult.pagination?.pageSize).toBe(1000);
+    expect(domainResult.data?.items[0]).toMatchObject({
+      keyword: "水质分析仪表",
+      rank: 1,
+      index: 1063,
+      mobileIndex: 919,
+      pageUrl: "https://example.com/page",
+      bidCompanyCount: 317,
+      recommendedBidAvg: 3.25,
+    });
+
+    const bidResult = await getBidKeywords5118Handler({
+      url: "example.com",
+      pageIndex: 1,
+      pageSize: 20,
+    });
+
+    expect(bidResult.data?.items[0]).toMatchObject({
+      keyword: "SEO优化",
+      title: "竞价标题",
+      intro: "竞价文案",
+      semPrice: "5.60",
+      pcSearchVolume: 384,
+      mobileSearchVolume: 115,
+      recentBidCompanyCount: 15,
+      totalBidCompanyCount: 45,
+      recommendedBidAvg: 4.65,
+    });
+
+    const weightResult = await getSiteWeight5118Handler({ url: "example.com" });
+
+    expect(weightResult.data?.weights).toEqual([
+      { type: "BaiduPCWeight", weight: "10+" },
+      { type: "BaiduMobileWeight", weight: "5-" },
+      { type: "SMWeight", weight: "8+" },
+    ]);
+  });
+
+  it("rejects bid keyword page size over the limit", async () => {
+    await expect(
+      getBidKeywords5118Handler({
+        url: "example.com",
+        pageSize: 501,
+      }),
+    ).rejects.toBeInstanceOf(ToolError);
   });
 });

@@ -1,0 +1,19 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "result": [
+      {
+        "type": "BaiduPCWeight",
+        "weight": "10+"
+      },
+      {
+        "type": "BaiduMobileWeight",
+        "weight": "5-"
+      },
+      {
+        "SMWeight": "8+"
+      }
+    ]
+  }
+}

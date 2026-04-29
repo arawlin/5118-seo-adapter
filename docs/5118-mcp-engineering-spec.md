@@ -260,14 +260,14 @@ These values are important because code generation often gets them wrong.
 | `export_pc_site_keywords_5118` | PC Site Ranking Keywords v2 / `/keyword/pc/v2` | `API_5118_BAIDUPC_V2` | Sync | `url` | `pageIndex` | `keywords[]` | Vendor result root is `data.baidupc[]`; `pageSize` is fixed at 500 |
 | `get_baijiahao_rankings_5118` | Baijiahao Ranking Export / `/keyword/baijiahao` | `API_5118_BAIJIAHAO` | Sync | `keyword`, `platform` | none | `rankings[]` | `platform` is `pc` or `mobile`; keyword means the Baijiahao target |
 | `export_mobile_site_keywords_5118` | Mobile Site Ranking Keywords v2 / `/keyword/mobile/v2` | `API_5118_MOBILE_V2` | Sync | `url` | `pageIndex` | `keywords[]` | Vendor result root is `data.baidumobile[]`; `pageSize` is fixed at 500 |
-| `export_domain_keywords_5118` | Domain Ranking Keywords v2 / `/keyword/domain/v2` | `API_5118_DOMAIN_V2` | Sync | `url` | `pageIndex` | `keywords[]` | Whole-domain aggregation; `pageSize` is fixed at 500 |
+| `get_domain_rank_keywords_5118` | Domain Ranking Keywords v2 / `/keyword/domain/v2` | `API_5118_DOMAIN_V2` | Sync | `url` | `pageIndex` | `items[]` | Whole-domain aggregation; the adapter only exposes `pageIndex`; vendor result root is `data.domain[]`; response page size is `1000` |
 
 ### Bid Intelligence
 
 | MCP tool | Official API / endpoint | Env var | Mode | Required input | Key options | Normalized data field | Constraints and notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `get_bid_companies_5118` | Bid Company Mining / `/bidsite` | `API_5118_BIDSITE` | Sync | `keyword` | `pageIndex`, `pageSize` | `companies[]` | Bid intelligence query; page size may go up to 500 |
-| `export_bid_keywords_5118` | Site Bid Keywords v2 / `/bidword/v2` | `API_5118_BIDWORD_V2` | Sync | `url` | `pageIndex`, `pageSize` | `keywords[]` | Bid keyword export; page size may go up to 500 |
+| `get_bid_keywords_5118` | Site Bid Keywords v2 / `/bidword/v2` | `API_5118_BIDWORD_V2` | Sync | `url` | `pageIndex`, `pageSize`, `includeHighlight` | `items[]` | Bid keyword export; page size may go up to 500 |
 
 ### Live Rank Checks
 
@@ -287,7 +287,7 @@ These values are important because code generation often gets them wrong.
 
 | MCP tool | Official API / endpoint | Env var | Mode | Required input | Key options | Normalized data field | Constraints and notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `check_url_indexing_5118` | URL Inclusion Check / `/include` | `API_5118_INCLUDE` | Async | `urls[]` | async control fields | `results[]` | Max 200 URLs; vendor completion signal uses `check_status` |
+| `check_url_indexing_5118` | URL Inclusion Check / `/include` | `API_5118_INCLUDE` | Async | `urls[]` | async control fields | `items[]` | Max 200 URLs; vendor completion signal uses `check_status` |
 | `get_site_weight_5118` | 5118 Site Weight / `/weight` | `API_5118_WEIGHT` | Sync | `url` | none | `weights` | Vendor result is `data.result[]` with one-key objects; flatten in normalized output |
 | `get_icp_record_5118` | ICP Record Lookup / `/icp/getinfo` | `API_5118_ICP` | Sync | `searchText` | `searchType` | `record` | Vendor docs describe `subject` and `webList` but do not provide a full JSON example |
 | `get_icp_record_instant_5118` | Instant ICP Record Lookup / `/icp/instant` | `API_5118_ICP_INSTANT` | Async | `searchText` | async control fields | `record` | Response schema is partially documented; preserve `raw` carefully |

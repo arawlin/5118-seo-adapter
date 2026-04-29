@@ -117,3 +117,128 @@ export interface MobileTrafficKeywordsData {
 
 export type GetMobileTrafficKeywords5118Item = MobileTrafficKeywordItem;
 export type GetMobileTrafficKeywords5118Data = MobileTrafficKeywordsData;
+
+/** Stable normalized item contract for get_domain_rank_keywords_5118. */
+export interface DomainRankKeywordItem {
+  keyword: string | null;
+  rank: number | null;
+  index: number | null;
+  mobileIndex: number | null;
+  haosouIndex: number | null;
+  pageTitle: string | null;
+  pageUrl: string | null;
+  bidCompanyCount: number | null;
+  competition: number | null;
+  pcSearchVolume: number | null;
+  mobileSearchVolume: number | null;
+  recommendedBidAvg: number | null;
+  googleIndex: number | null;
+  kuaishouIndex: number | null;
+  weiboIndex: number | null;
+}
+
+/** Stable normalized data contract for get_domain_rank_keywords_5118. */
+export interface DomainRankKeywordsData {
+  items: DomainRankKeywordItem[];
+  pagination: PaginationInfo | null;
+}
+
+export type GetDomainRankKeywords5118Item = DomainRankKeywordItem;
+export type GetDomainRankKeywords5118Data = DomainRankKeywordsData;
+
+/** Stable normalized item contract for get_bid_keywords_5118. */
+export interface BidKeywordItem {
+  keyword: string | null;
+  title: string | null;
+  intro: string | null;
+  semPrice: string | null;
+  pcSearchVolume: number | null;
+  mobileSearchVolume: number | null;
+  competition: number | null;
+  index: number | null;
+  mobileIndex: number | null;
+  haosouIndex: number | null;
+  recentBidCompanyCount: number | null;
+  totalBidCompanyCount: number | null;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  recommendedBidAvg: number | null;
+  googleIndex: number | null;
+  kuaishouIndex: number | null;
+  weiboIndex: number | null;
+}
+
+/** Stable normalized data contract for get_bid_keywords_5118. */
+export interface BidKeywordsData {
+  items: BidKeywordItem[];
+  pagination: PaginationInfo | null;
+}
+
+export type GetBidKeywords5118Item = BidKeywordItem;
+export type GetBidKeywords5118Data = BidKeywordsData;
+
+/** Stable normalized item contract for get_site_weight_5118. */
+export interface SiteWeightItem {
+  type: string | null;
+  weight: string | null;
+}
+
+/** Stable normalized data contract for get_site_weight_5118. */
+export interface SiteWeightData {
+  weights: SiteWeightItem[];
+}
+
+export type GetSiteWeight5118Item = SiteWeightItem;
+export type GetSiteWeight5118Data = SiteWeightData;
+
+/** Stable normalized item contract for get_pc_rank_snapshot_5118 and get_mobile_rank_snapshot_5118. */
+export interface RankSnapshotResultItem {
+  siteUrl: string | null;
+  rank: number | null;
+  pageTitle: string | null;
+  pageUrl: string | null;
+  top100: number | null;
+  siteWeight: string | null;
+}
+
+/** Stable normalized keyword contract for rank snapshot tools. */
+export interface RankSnapshotKeywordItem {
+  keyword: string | null;
+  searchEngine: string | null;
+  ip: string | null;
+  area: string | null;
+  network: string | null;
+  ranks: RankSnapshotResultItem[];
+}
+
+/** Stable normalized data contract for rank snapshot tools. */
+export interface RankSnapshotData {
+  rankings: RankSnapshotKeywordItem[];
+}
+
+export type GetPcRankSnapshot5118KeywordItem = RankSnapshotKeywordItem;
+export type GetPcRankSnapshot5118RankItem = RankSnapshotResultItem;
+export type GetPcRankSnapshot5118Data = RankSnapshotData;
+export type GetMobileRankSnapshot5118KeywordItem = RankSnapshotKeywordItem;
+export type GetMobileRankSnapshot5118RankItem = RankSnapshotResultItem;
+export type GetMobileRankSnapshot5118Data = RankSnapshotData;
+
+/** Stable normalized item contract for check_url_indexing_5118. */
+export interface UrlIndexingItem {
+  url: string | null;
+  status: number | null;
+  title: string | null;
+  snapshotTime: string | null;
+}
+
+/** Stable normalized data contract for check_url_indexing_5118. */
+export interface UrlIndexingData {
+  items: UrlIndexingItem[];
+  total: number | null;
+  checkStatus: number | null;
+  submitTime: string | null;
+  finishedTime: string | null;
+}
+
+export type CheckUrlIndexing5118Item = UrlIndexingItem;
+export type CheckUrlIndexing5118Data = UrlIndexingData;

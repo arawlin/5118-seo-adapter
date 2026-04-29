@@ -1,0 +1,26 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "taskid": 123456,
+    "keywordmonitor": [
+      {
+        "keyword": "SEO优化",
+        "search_engine": "baidupc",
+        "ip": "1.2.3.4",
+        "area": "广东",
+        "network": "电信",
+        "ranks": [
+          {
+            "site_url": "www.example.com",
+            "rank": 1,
+            "page_title": "SEO优化教程",
+            "page_url": "https://www.example.com/seo",
+            "top100": 5200,
+            "site_weight": "6"
+          }
+        ]
+      }
+    ]
+  }
+}

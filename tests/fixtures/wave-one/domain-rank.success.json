@@ -1,0 +1,29 @@
+{
+  "errcode": "0",
+  "errmsg": "",
+  "data": {
+    "total": 12345,
+    "page_count": 25,
+    "page_index": 1,
+    "page_size": 1000,
+    "domain": [
+      {
+        "keyword": "水质分析仪表",
+        "rank": 1,
+        "index": 1063,
+        "mobile_index": 919,
+        "haosou_index": 1163,
+        "page_title": "示例标题",
+        "url": "https://example.com/page",
+        "bidword_companycount": 317,
+        "bidword_kwc": 1,
+        "bidword_pcpv": 240,
+        "bidword_wisepv": 1433,
+        "bidword_recommend_price_avg": 3.25,
+        "google_index": 12100,
+        "kuaishou_index": 580,
+        "weibo_index": 320
+      }
+    ]
+  }
+}
