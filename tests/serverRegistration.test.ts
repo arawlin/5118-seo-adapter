@@ -2,8 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { API_TOOL_NAMES } from "../src/config/apiKeyRegistry.js";
 import { createServer } from "../src/server.js";
-import { TOOL_INPUT_SCHEMAS } from "../src/types/toolInputSchemas.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../src/types/toolOutputSchemas.js";
 
 function createRegisterToolSpy() {
   return vi
@@ -49,30 +47,24 @@ describe("server tool registration contract", () => {
 
     const registerCalls = registerSpy.mock.calls as Array<[string, unknown, unknown]>;
 
-    for (const [name, config] of registerCalls) {
-      const toolName = name as keyof typeof TOOL_OUTPUT_SCHEMAS;
+    for (const [, config] of registerCalls) {
       const toolConfig = config as { outputSchema?: Record<string, unknown> };
       expect(toolConfig.outputSchema).toBeDefined();
       expect(Object.keys(toolConfig.outputSchema ?? {}).length).toBeGreaterThan(0);
-      expect(toolConfig.outputSchema).toBe(TOOL_OUTPUT_SCHEMAS[toolName]);
     }
   });
 
-  it("provides canonical input schema for every tool", () => {
+  it("provides input schema for every tool", () => {
     const registerSpy = createRegisterToolSpy();
 
     createServer();
 
     const registerCalls = registerSpy.mock.calls as Array<[string, unknown, unknown]>;
 
-    for (const [name, config] of registerCalls) {
-      const toolName = name as keyof typeof TOOL_INPUT_SCHEMAS;
+    for (const [, config] of registerCalls) {
       const toolConfig = config as { inputSchema?: Record<string, unknown> };
       expect(toolConfig.inputSchema).toBeDefined();
       expect(Object.keys(toolConfig.inputSchema ?? {}).length).toBeGreaterThan(0);
-      expect(Object.keys(toolConfig.inputSchema ?? {})).toEqual(
-        Object.keys(TOOL_INPUT_SCHEMAS[toolName]),
-      );
     }
   });
 });

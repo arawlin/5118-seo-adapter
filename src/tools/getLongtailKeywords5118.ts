@@ -6,9 +6,16 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeLongtailKeywordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { LongtailKeywordsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  PAGINATION_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA = {
   keyword: z
@@ -46,6 +53,37 @@ export const GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA = {
     .describe("Optional vendor filter date in yyyy-MM-dd format. Use it when you need a specific date snapshot supported by 5118."),
 } as const;
 
+export const LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  semReason: STRING_OR_NULL_OUTPUT_SCHEMA,
+  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA,
+  semRecommendPriceAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const LONGTAIL_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
+  keywords: z.array(LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+});
+
+export type LongtailKeywordItem = z.infer<typeof LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA>;
+export type LongtailKeywordsData = z.infer<typeof LONGTAIL_KEYWORDS_DATA_OUTPUT_SCHEMA>;
+export type GetLongtailKeywords5118Item = LongtailKeywordItem;
+export type GetLongtailKeywords5118Data = LongtailKeywordsData;
+
 export type GetLongtailKeywords5118Input = z.infer<
   z.ZodObject<typeof GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA>
 >;
@@ -54,6 +92,9 @@ export type GetLongtailKeywordsInput = GetLongtailKeywords5118Input;
 const TOOL_NAME = "get_longtail_keywords_5118";
 const API_NAME = "Massive Long-tail Keyword Mining v2";
 const ENDPOINT = "/keyword/word/v2";
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(LONGTAIL_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetLongtailKeywords5118Tool(
   registerTool: RegisterTool,
@@ -66,10 +107,12 @@ export function registerGetLongtailKeywords5118Tool(
       description:
         "Sync long-tail keyword mining via 5118 /keyword/word/v2. Input fields: keyword, pageIndex, pageSize<=100, sortField, sortType, filter, filterDate.",
       inputSchema: GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(TOOL_NAME, await getLongtailKeywords5118Handler(input)),
+    async (input) => {
+      const payload = await getLongtailKeywords5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

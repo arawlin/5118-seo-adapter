@@ -10,9 +10,15 @@ import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeMobileTrafficKeywordsResponse } from "../normalizers/keywordMetrics.js";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { MobileTrafficKeywordsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  PAGINATION_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA = {
   keyword: z
@@ -53,6 +59,26 @@ export const GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA = {
     .describe("Optional polling interval in seconds for wait mode. Defaults to the shared async poll interval when omitted."),
 } as const;
 
+export const MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  url: STRING_OR_NULL_OUTPUT_SCHEMA,
+  weight: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const MOBILE_TRAFFIC_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
+  keywords: z.array(MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+});
+
+export type MobileTrafficKeywordItem = z.infer<typeof MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA>;
+export type MobileTrafficKeywordsData = z.infer<typeof MOBILE_TRAFFIC_KEYWORDS_DATA_OUTPUT_SCHEMA>;
+export type GetMobileTrafficKeywords5118Item = MobileTrafficKeywordItem;
+export type GetMobileTrafficKeywords5118Data = MobileTrafficKeywordsData;
+
 export type GetMobileTrafficKeywords5118Input = z.infer<
   z.ZodObject<typeof GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA>
 >;
@@ -61,6 +87,9 @@ export type GetMobileTrafficKeywordsInput = GetMobileTrafficKeywords5118Input;
 const TOOL_NAME = "get_mobile_traffic_keywords_5118";
 const API_NAME = "Mobile Traffic Keyword Mining";
 const ENDPOINT = "/traffic";
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(MOBILE_TRAFFIC_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetMobileTrafficKeywords5118Tool(
   registerTool: RegisterTool,
@@ -72,10 +101,12 @@ export function registerGetMobileTrafficKeywords5118Tool(
       title: "Get Mobile Traffic Keywords 5118",
       description: "Async mobile traffic keyword mining via 5118 /traffic.",
       inputSchema: GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(TOOL_NAME, await getMobileTrafficKeywords5118Handler(input)),
+    async (input) => {
+      const payload = await getMobileTrafficKeywords5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

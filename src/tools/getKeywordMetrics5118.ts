@@ -9,9 +9,15 @@ import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeKeywordMetricsResponse } from "../normalizers/keywordMetrics.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { KeywordMetricsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const GET_KEYWORD_METRICS_5118_INPUT_SCHEMA = {
   keywords: z
@@ -39,6 +45,41 @@ export const GET_KEYWORD_METRICS_5118_INPUT_SCHEMA = {
     .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds when omitted."),
 } as const;
 
+export const KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  cpc: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  recommendedBidMin: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  recommendedBidMax: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  ageBest: STRING_OR_NULL_OUTPUT_SCHEMA,
+  ageBestValue: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  sexMale: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  sexFemale: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  bidReason: STRING_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const KEYWORD_METRICS_DATA_OUTPUT_SCHEMA = z.object({
+  items: z.array(KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA),
+});
+
+export type KeywordMetricsItem = z.infer<typeof KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA>;
+export type KeywordMetricsData = z.infer<typeof KEYWORD_METRICS_DATA_OUTPUT_SCHEMA>;
+export type GetKeywordMetrics5118Item = KeywordMetricsItem;
+export type GetKeywordMetrics5118Data = KeywordMetricsData;
+
 export type GetKeywordMetrics5118Input = z.infer<
   z.ZodObject<typeof GET_KEYWORD_METRICS_5118_INPUT_SCHEMA>
 >;
@@ -48,6 +89,9 @@ const TOOL_NAME = "get_keyword_metrics_5118";
 const API_NAME = "Keyword Search Volume Info API v2";
 const ENDPOINT = "/keywordparam/v2";
 const DEFAULT_KEYWORD_METRICS_POLL_INTERVAL_SECONDS = 60;
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(KEYWORD_METRICS_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetKeywordMetrics5118Tool(
   registerTool: RegisterTool,
@@ -60,10 +104,12 @@ export function registerGetKeywordMetrics5118Tool(
       description:
         "Async keyword metrics via 5118 /keywordparam/v2. Input fields: keywords<=50, executionMode submit|poll|wait, taskId, maxWaitSeconds, pollIntervalSeconds.",
       inputSchema: GET_KEYWORD_METRICS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(TOOL_NAME, await getKeywordMetrics5118Handler(input)),
+    async (input) => {
+      const payload = await getKeywordMetrics5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

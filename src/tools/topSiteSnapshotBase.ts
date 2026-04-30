@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { assertApiKey, type ApiToolName } from "../config/apiKeyRegistry.js";
 import {
   DEFAULT_TRAFFIC_MAX_WAIT_SECONDS,
@@ -8,9 +9,31 @@ import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeTopSiteSnapshotsResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { TopSiteSnapshotsData } from "../types/toolOutputSchemas.js";
+import { STRING_OR_NULL_OUTPUT_SCHEMA } from "./toolRegistration.js";
+import { RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA } from "./rankSnapshotBase.js";
 
 const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 60;
+
+export const TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  searchEngine: STRING_OR_NULL_OUTPUT_SCHEMA,
+  ip: STRING_OR_NULL_OUTPUT_SCHEMA,
+  area: STRING_OR_NULL_OUTPUT_SCHEMA,
+  network: STRING_OR_NULL_OUTPUT_SCHEMA,
+  checkedAt: STRING_OR_NULL_OUTPUT_SCHEMA,
+  ranks: z.array(RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA),
+});
+
+export const TOP_SITE_SNAPSHOTS_DATA_OUTPUT_SCHEMA = z.object({
+  siteSnapshots: z.array(TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA),
+});
+
+export type TopSiteSnapshotItem = z.infer<typeof TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA>;
+export type TopSiteSnapshotsData = z.infer<typeof TOP_SITE_SNAPSHOTS_DATA_OUTPUT_SCHEMA>;
+export type GetPcTop50Sites5118Item = TopSiteSnapshotItem;
+export type GetPcTop50Sites5118Data = TopSiteSnapshotsData;
+export type GetMobileTop50Sites5118Item = TopSiteSnapshotItem;
+export type GetMobileTop50Sites5118Data = TopSiteSnapshotsData;
 
 export interface TopSiteSnapshotInput extends AsyncControlInput {
   keywords?: string[];

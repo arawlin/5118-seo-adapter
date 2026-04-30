@@ -1,10 +1,8 @@
 import { createPagination } from "../lib/responseEnvelope.js";
 import type { PaginationInfo } from "../types/toolContracts.js";
-import type {
-  FrequencyWordsData,
-  LongtailKeywordsData,
-  SuggestTermsData,
-} from "../types/toolOutputSchemas.js";
+import type { FrequencyWordsData } from "../tools/getIndustryFrequencyWords5118.js";
+import type { LongtailKeywordsData } from "../tools/getLongtailKeywords5118.js";
+import type { SuggestTermsData } from "../tools/getSuggestTerms5118.js";
 
 function toNumber(value: unknown): number | null {
   if (value === undefined || value === null || value === "") {

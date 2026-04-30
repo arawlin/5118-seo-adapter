@@ -6,9 +6,16 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeDomainRankKeywordsResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { DomainRankKeywordsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  PAGINATION_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const GET_DOMAIN_RANK_KEYWORDS_5118_INPUT_SCHEMA = {
   url: z
@@ -23,6 +30,34 @@ export const GET_DOMAIN_RANK_KEYWORDS_5118_INPUT_SCHEMA = {
     .describe("Optional 1-based result page number. Defaults to 1."),
 } as const;
 
+export const DOMAIN_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  pageTitle: STRING_OR_NULL_OUTPUT_SCHEMA,
+  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
+  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const DOMAIN_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
+  items: z.array(DOMAIN_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+});
+
+export type DomainRankKeywordItem = z.infer<typeof DOMAIN_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA>;
+export type DomainRankKeywordsData = z.infer<typeof DOMAIN_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA>;
+export type GetDomainRankKeywords5118Item = DomainRankKeywordItem;
+export type GetDomainRankKeywords5118Data = DomainRankKeywordsData;
+
 export type GetDomainRankKeywords5118Input = z.infer<
   z.ZodObject<typeof GET_DOMAIN_RANK_KEYWORDS_5118_INPUT_SCHEMA>
 >;
@@ -31,6 +66,9 @@ export type GetDomainRankKeywordsInput = GetDomainRankKeywords5118Input;
 const TOOL_NAME = "get_domain_rank_keywords_5118";
 const API_NAME = "PC Domain Rank Keywords Export API v2";
 const ENDPOINT = "/keyword/domain/v2";
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(DOMAIN_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetDomainRankKeywords5118Tool(
   registerTool: RegisterTool,
@@ -42,10 +80,12 @@ export function registerGetDomainRankKeywords5118Tool(
       title: "Get Domain Rank Keywords 5118",
       description: "Sync domain-wide PC rank keyword export via 5118 /keyword/domain/v2.",
       inputSchema: GET_DOMAIN_RANK_KEYWORDS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(TOOL_NAME, await getDomainRankKeywords5118Handler(input)),
+    async (input) => {
+      const payload = await getDomainRankKeywords5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

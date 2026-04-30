@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { assertApiKey, type ApiToolName } from "../config/apiKeyRegistry.js";
 import {
   DEFAULT_TRAFFIC_MAX_WAIT_SECONDS,
@@ -8,9 +9,44 @@ import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeRankSnapshotResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
-import type { RankSnapshotData } from "../types/toolOutputSchemas.js";
+import {
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+} from "./toolRegistration.js";
 
 const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 60;
+
+export const RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA = z.object({
+  siteUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
+  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  pageTitle: STRING_OR_NULL_OUTPUT_SCHEMA,
+  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
+  top100: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  siteWeight: STRING_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const RANK_SNAPSHOT_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  searchEngine: STRING_OR_NULL_OUTPUT_SCHEMA,
+  ip: STRING_OR_NULL_OUTPUT_SCHEMA,
+  area: STRING_OR_NULL_OUTPUT_SCHEMA,
+  network: STRING_OR_NULL_OUTPUT_SCHEMA,
+  ranks: z.array(RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA),
+});
+
+export const RANK_SNAPSHOT_DATA_OUTPUT_SCHEMA = z.object({
+  rankings: z.array(RANK_SNAPSHOT_KEYWORD_ITEM_OUTPUT_SCHEMA),
+});
+
+export type RankSnapshotResultItem = z.infer<typeof RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA>;
+export type RankSnapshotKeywordItem = z.infer<typeof RANK_SNAPSHOT_KEYWORD_ITEM_OUTPUT_SCHEMA>;
+export type RankSnapshotData = z.infer<typeof RANK_SNAPSHOT_DATA_OUTPUT_SCHEMA>;
+export type GetPcRankSnapshot5118KeywordItem = RankSnapshotKeywordItem;
+export type GetPcRankSnapshot5118RankItem = RankSnapshotResultItem;
+export type GetPcRankSnapshot5118Data = RankSnapshotData;
+export type GetMobileRankSnapshot5118KeywordItem = RankSnapshotKeywordItem;
+export type GetMobileRankSnapshot5118RankItem = RankSnapshotResultItem;
+export type GetMobileRankSnapshot5118Data = RankSnapshotData;
 
 export interface RankSnapshotInput extends AsyncControlInput {
   url?: string;

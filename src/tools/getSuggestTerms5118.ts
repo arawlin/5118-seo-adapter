@@ -6,9 +6,13 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeSuggestTermsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { SuggestTermsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const SUGGEST_PLATFORM_VALUES = [
   "baidu",
@@ -41,6 +45,23 @@ export const GET_SUGGEST_TERMS_5118_INPUT_SCHEMA = {
     .describe("Required official vendor platform enum. Examples include baidu, baidumobile, zhihu, douyin, and amazon. The platform changes the suggestion corpus."),
 } as const;
 
+export const SUGGEST_TERM_ITEM_OUTPUT_SCHEMA = z.object({
+  term: STRING_OR_NULL_OUTPUT_SCHEMA,
+  sourceWord: STRING_OR_NULL_OUTPUT_SCHEMA,
+  promotedTerm: STRING_OR_NULL_OUTPUT_SCHEMA,
+  platform: STRING_OR_NULL_OUTPUT_SCHEMA,
+  addTime: STRING_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const SUGGEST_TERMS_DATA_OUTPUT_SCHEMA = z.object({
+  suggestions: z.array(SUGGEST_TERM_ITEM_OUTPUT_SCHEMA),
+});
+
+export type SuggestTermItem = z.infer<typeof SUGGEST_TERM_ITEM_OUTPUT_SCHEMA>;
+export type SuggestTermsData = z.infer<typeof SUGGEST_TERMS_DATA_OUTPUT_SCHEMA>;
+export type GetSuggestTerms5118Item = SuggestTermItem;
+export type GetSuggestTerms5118Data = SuggestTermsData;
+
 export type GetSuggestTerms5118Input = z.infer<
   z.ZodObject<typeof GET_SUGGEST_TERMS_5118_INPUT_SCHEMA>
 >;
@@ -50,6 +71,9 @@ export type GetSuggestTermsInput = GetSuggestTerms5118Input;
 const TOOL_NAME = "get_suggest_terms_5118";
 const API_NAME = "Suggestion Mining";
 const ENDPOINT = "/suggest/list";
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SUGGEST_TERMS_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetSuggestTerms5118Tool(
   registerTool: RegisterTool,
@@ -61,9 +85,12 @@ export function registerGetSuggestTerms5118Tool(
       title: "Get Suggest Terms 5118",
       description: "Sync suggestion mining via 5118 /suggest/list.",
       inputSchema: GET_SUGGEST_TERMS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) => toToolResult(TOOL_NAME, await getSuggestTerms5118Handler(input)),
+    async (input) => {
+      const payload = await getSuggestTerms5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

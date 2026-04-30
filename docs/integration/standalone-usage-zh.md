@@ -163,16 +163,16 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 - 每个工具现在都会在 MCP tool 元数据中发布完整的 `outputSchema`。
 - 每个工具在 `src/tools/` 下的注册函数会自行声明该工具的
   `outputSchema`。
-- 适配器在返回结果前，会先按该工具的 `outputSchema` 校验归一化外壳。
+- 每个工具会在返回 MCP 结构化内容前，按自己的 `outputSchema`
+  校验归一化外壳。
+- `src/server.ts` 现在只负责序列化已通过校验的 payload。
 - 如果校验失败，调用会抛出 MCP 工具错误，而不是返回部分有效的外壳。
 
 ### 结构化输入 Schema
 
-- 输入 schema 统一通过一个注册表模块对外暴露：
-  `src/types/toolInputSchemas.ts`。
-- 该注册表在 `src/types/` 下独立维护，不依赖 `src/tools/`。
-- 工具模块可在本地注册函数中使用本地 schema；统一校验与契约测试以
-  `src/types/toolInputSchemas.ts` 的规范注册表为准。
+- 每个工具都在 `src/tools/` 下各自模块中定义输入 schema。
+- MCP 注册时使用的 schema 与该工具 handler 的类型约束是同一个对象，
+  每个工具只有一份输入契约来源。
 - `src/server.ts` 通过调用各工具本地注册函数完成注册，server 本身只保留
   编排与一致性校验逻辑。
 
@@ -191,24 +191,25 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 如果你需要完整的 Wave 1 与 Wave 2 字段矩阵，请同时参考
 [docs/5118-mcp-engineering-spec-zh.md](../5118-mcp-engineering-spec-zh.md)。
 
-### 公开类型导入入口
+### 按 Tool 模块导入类型
 
-外部调用方现在可以从一个统一路径导入稳定的归一化契约类型：
+包级统一类型入口已移除。请从各自 tool 模块直接导入归一化契约类型，
+并从 `toolContracts` 导入公共外壳契约：
 
 ```ts
 import type {
-  GetKeywordMetrics5118Input,
   GetKeywordMetrics5118Data,
   GetKeywordMetrics5118Item,
-  GetLongtailKeywords5118Data,
-  GetSuggestTerms5118Input,
+} from "5118-seo-adapter/dist/tools/getKeywordMetrics5118.js";
+import type { GetLongtailKeywords5118Data } from "5118-seo-adapter/dist/tools/getLongtailKeywords5118.js";
+import type {
   PaginationInfo,
   ResponseEnvelope,
-} from "5118-seo-adapter/types";
+} from "5118-seo-adapter/dist/types/toolContracts.js";
 ```
 
-建议优先使用 `Get...Data` 和 `Get...Item` 这一组按 tool 命名的公开契约名称。
-旧的通用名称，例如 `KeywordMetricsData`，当前仍继续导出，用于兼容已有代码。
+建议优先使用每个 tool 模块导出的 `Get...Data` 和 `Get...Item` 契约名称。
+通用名称（例如 `KeywordMetricsData`）也会在同一模块导出，用于兼容。
 
 | MCP tool | Endpoint | 官方 API | 详情 URL | 归一化数据键 |
 | --- | --- | --- | --- | --- |

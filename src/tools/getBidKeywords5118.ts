@@ -6,9 +6,16 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeBidKeywordsResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { BidKeywordsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  PAGINATION_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const GET_BID_KEYWORDS_5118_INPUT_SCHEMA = {
   url: z
@@ -34,6 +41,37 @@ export const GET_BID_KEYWORDS_5118_INPUT_SCHEMA = {
     .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
 } as const;
 
+export const BID_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
+  title: STRING_OR_NULL_OUTPUT_SCHEMA,
+  intro: STRING_OR_NULL_OUTPUT_SCHEMA,
+  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA,
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  recentBidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  totalBidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  firstSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA,
+  lastSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA,
+  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const BID_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
+  items: z.array(BID_KEYWORD_ITEM_OUTPUT_SCHEMA),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+});
+
+export type BidKeywordItem = z.infer<typeof BID_KEYWORD_ITEM_OUTPUT_SCHEMA>;
+export type BidKeywordsData = z.infer<typeof BID_KEYWORDS_DATA_OUTPUT_SCHEMA>;
+export type GetBidKeywords5118Item = BidKeywordItem;
+export type GetBidKeywords5118Data = BidKeywordsData;
+
 export type GetBidKeywords5118Input = z.infer<
   z.ZodObject<typeof GET_BID_KEYWORDS_5118_INPUT_SCHEMA>
 >;
@@ -42,6 +80,9 @@ export type GetBidKeywordsInput = GetBidKeywords5118Input;
 const TOOL_NAME = "get_bid_keywords_5118";
 const API_NAME = "Site Bid Keywords Mining API v2";
 const ENDPOINT = "/bidword/v2";
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(BID_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetBidKeywords5118Tool(
   registerTool: RegisterTool,
@@ -53,9 +94,12 @@ export function registerGetBidKeywords5118Tool(
       title: "Get Bid Keywords 5118",
       description: "Sync bid keyword mining via 5118 /bidword/v2.",
       inputSchema: GET_BID_KEYWORDS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) => toToolResult(TOOL_NAME, await getBidKeywords5118Handler(input)),
+    async (input) => {
+      const payload = await getBidKeywords5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

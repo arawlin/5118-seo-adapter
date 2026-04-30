@@ -9,9 +9,14 @@ import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeUrlIndexingResponse } from "../normalizers/siteInsights.js";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { UrlIndexingData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const CHECK_URL_INDEXING_5118_INPUT_SCHEMA = {
   urls: z
@@ -39,6 +44,26 @@ export const CHECK_URL_INDEXING_5118_INPUT_SCHEMA = {
     .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
 } as const;
 
+export const URL_INDEXING_ITEM_OUTPUT_SCHEMA = z.object({
+  url: STRING_OR_NULL_OUTPUT_SCHEMA,
+  status: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  title: STRING_OR_NULL_OUTPUT_SCHEMA,
+  snapshotTime: STRING_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const URL_INDEXING_DATA_OUTPUT_SCHEMA = z.object({
+  items: z.array(URL_INDEXING_ITEM_OUTPUT_SCHEMA),
+  total: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  checkStatus: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  submitTime: STRING_OR_NULL_OUTPUT_SCHEMA,
+  finishedTime: STRING_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export type UrlIndexingItem = z.infer<typeof URL_INDEXING_ITEM_OUTPUT_SCHEMA>;
+export type UrlIndexingData = z.infer<typeof URL_INDEXING_DATA_OUTPUT_SCHEMA>;
+export type CheckUrlIndexing5118Item = UrlIndexingItem;
+export type CheckUrlIndexing5118Data = UrlIndexingData;
+
 export type CheckUrlIndexing5118Input = z.infer<
   z.ZodObject<typeof CHECK_URL_INDEXING_5118_INPUT_SCHEMA>
 >;
@@ -48,6 +73,9 @@ const TOOL_NAME = "check_url_indexing_5118";
 const API_NAME = "PC URL Indexing API";
 const ENDPOINT = "/include";
 const DEFAULT_INDEXING_POLL_INTERVAL_SECONDS = 60;
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(URL_INDEXING_DATA_OUTPUT_SCHEMA);
+
 
 export function registerCheckUrlIndexing5118Tool(
   registerTool: RegisterTool,
@@ -59,9 +87,12 @@ export function registerCheckUrlIndexing5118Tool(
       title: "Check URL Indexing 5118",
       description: "Async URL indexing check via 5118 /include.",
       inputSchema: CHECK_URL_INDEXING_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) => toToolResult(TOOL_NAME, await checkUrlIndexing5118Handler(input)),
+    async (input) => {
+      const payload = await checkUrlIndexing5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

@@ -16,31 +16,14 @@ import { registerGetPcSiteRankKeywords5118Tool } from "./tools/getPcSiteRankKeyw
 import { registerGetPcTop50Sites5118Tool } from "./tools/getPcTop50Sites5118.js";
 import { registerGetSiteWeight5118Tool } from "./tools/getSiteWeight5118.js";
 import { registerGetSuggestTerms5118Tool } from "./tools/getSuggestTerms5118.js";
-import { validateToolOutputEnvelope } from "./types/toolOutputSchemas.js";
 
 export const REGISTERED_TOOL_NAMES = API_TOOL_NAMES;
 
 type RegisteredToolName = (typeof REGISTERED_TOOL_NAMES)[number];
 type RegisterToolMethod = McpServer["registerTool"];
 
-function toToolResult(toolName: RegisteredToolName, payload: unknown) {
-  const validationResult = validateToolOutputEnvelope(toolName, payload);
-
-  if (!validationResult.success) {
-    const issueSummary = validationResult.error.issues
-      .slice(0, 5)
-      .map((issue) => {
-        const issuePath = issue.path.length > 0 ? issue.path.join(".") : "<root>";
-        return `${issuePath}: ${issue.message}`;
-      })
-      .join("; ");
-
-    throw new Error(
-      `Output schema validation failed for ${toolName}: ${issueSummary}`,
-    );
-  }
-
-  const structuredContent = validationResult.data;
+function toToolResult(payload: Record<string, unknown>) {
+  const structuredContent = payload;
 
   return {
     content: [

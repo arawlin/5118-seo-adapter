@@ -164,20 +164,18 @@ Every tool returns a unified envelope:
 - Every tool now publishes a full `outputSchema` in MCP tool metadata.
 - Each tool's register function under `src/tools/` declares its own
   `outputSchema` during registration.
-- Before a tool result is returned, the adapter validates the normalized
-  envelope against that tool's `outputSchema`.
+- Each tool validates its own normalized envelope against its
+  `outputSchema` before returning MCP structured content.
+- `src/server.ts` now only serializes already-validated payloads.
 - If the validation fails, the call throws an MCP tool error instead of
   returning a partially valid envelope.
 
 ### Structured Input Schema
 
-- Input schemas are exposed through one registry module:
-  `src/types/toolInputSchemas.ts`.
-- The registry module is self-contained under `src/types/` and does not
-  import from `src/tools/`.
-- Tool modules can use local schema objects for tool registration, while
-  contract tests and shared validators use the canonical registry in
-  `src/types/toolInputSchemas.ts`.
+- Each tool defines its own input schema in its own module under
+  `src/tools/`.
+- The schema used for MCP registration is the same object used by that
+  tool's handler typing, so there is now a single source of truth per tool.
 - Tool registration in `src/server.ts` is delegated to tool-local register
   functions, keeping the server as a thin orchestration layer.
 
@@ -198,25 +196,27 @@ focus on the current-set tools and representative async patterns. For the full
 Wave 1 and Wave 2 field matrix, also see
 [docs/5118-mcp-engineering-spec.md](../5118-mcp-engineering-spec.md).
 
-### Public Type Imports
+### Tool-Local Type Imports
 
-External consumers can now import the stable normalized contracts from one path:
+The unified package-level type entry has been removed. Import normalized
+contracts directly from the owning tool module, and import shared envelope
+contracts from `toolContracts`:
 
 ```ts
 import type {
-  GetKeywordMetrics5118Input,
   GetKeywordMetrics5118Data,
   GetKeywordMetrics5118Item,
-  GetLongtailKeywords5118Data,
-  GetSuggestTerms5118Input,
+} from "5118-seo-adapter/dist/tools/getKeywordMetrics5118.js";
+import type { GetLongtailKeywords5118Data } from "5118-seo-adapter/dist/tools/getLongtailKeywords5118.js";
+import type {
   PaginationInfo,
   ResponseEnvelope,
-} from "5118-seo-adapter/types";
+} from "5118-seo-adapter/dist/types/toolContracts.js";
 ```
 
-Use the `Get...Data` and `Get...Item` aliases as the preferred public contract
-names. The older generic names such as `KeywordMetricsData` are still exported
-for compatibility.
+Use the `Get...Data` and `Get...Item` aliases from each tool module as the
+preferred contract names. The generic names such as `KeywordMetricsData` are
+also exported by the same module for compatibility.
 
 | MCP tool | Endpoint | Official API | Detail URL | Normalized data key |
 | --- | --- | --- | --- | --- |

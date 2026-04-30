@@ -1,9 +1,7 @@
 import { createPagination } from "../lib/responseEnvelope.js";
 import type { PaginationInfo } from "../types/toolContracts.js";
-import type {
-  KeywordMetricsData,
-  MobileTrafficKeywordsData,
-} from "../types/toolOutputSchemas.js";
+import type { KeywordMetricsData } from "../tools/getKeywordMetrics5118.js";
+import type { MobileTrafficKeywordsData } from "../tools/getMobileTrafficKeywords5118.js";
 
 function toNumber(value: unknown): number | null {
   if (value === undefined || value === null || value === "") {

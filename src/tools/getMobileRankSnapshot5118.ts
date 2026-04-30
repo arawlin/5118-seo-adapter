@@ -1,9 +1,13 @@
 import { z } from "zod";
-import { createRankSnapshotHandler } from "./rankSnapshotBase.js";
+import { createRankSnapshotHandler, RANK_SNAPSHOT_DATA_OUTPUT_SCHEMA } from "./rankSnapshotBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { RankSnapshotData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
+import type { RankSnapshotData } from "./rankSnapshotBase.js";
 
 export const GET_MOBILE_RANK_SNAPSHOT_5118_INPUT_SCHEMA = {
   url: z
@@ -55,6 +59,9 @@ const CONFIG = {
   maxCheckRow: 100,
 } as const;
 
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(RANK_SNAPSHOT_DATA_OUTPUT_SCHEMA);
+
+
 export function registerGetMobileRankSnapshot5118Tool(
   registerTool: RegisterTool,
   toToolResult: ToToolResult,
@@ -65,10 +72,12 @@ export function registerGetMobileRankSnapshot5118Tool(
       title: "Get Mobile Rank Snapshot 5118",
       description: "Async mobile rank snapshot via 5118 /morerank/baidumobile.",
       inputSchema: GET_MOBILE_RANK_SNAPSHOT_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[CONFIG.toolName],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(CONFIG.toolName, await getMobileRankSnapshot5118Handler(input)),
+    async (input) => {
+      const payload = await getMobileRankSnapshot5118Handler(input);
+      return toToolResult(validateToolOutputPayload(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

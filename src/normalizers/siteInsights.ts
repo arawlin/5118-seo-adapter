@@ -1,15 +1,12 @@
 import { createPagination } from "../lib/responseEnvelope.js";
-import type {
-  BidSitesData,
-  BidKeywordsData,
-  DomainRankKeywordsData,
-  RankSnapshotData,
-  SiteRankKeywordsData,
-  SiteWeightData,
-  TopSiteSnapshotsData,
-  UrlIndexingData,
-  RankSnapshotResultItem,
-} from "../types/toolOutputSchemas.js";
+import type { BidSitesData } from "../tools/getBidSites5118.js";
+import type { BidKeywordsData } from "../tools/getBidKeywords5118.js";
+import type { DomainRankKeywordsData } from "../tools/getDomainRankKeywords5118.js";
+import type { SiteWeightData } from "../tools/getSiteWeight5118.js";
+import type { UrlIndexingData } from "../tools/checkUrlIndexing5118.js";
+import type { RankSnapshotData, RankSnapshotResultItem } from "../tools/rankSnapshotBase.js";
+import type { TopSiteSnapshotsData } from "../tools/topSiteSnapshotBase.js";
+import type { SiteRankKeywordsData } from "../tools/siteRankKeywordsBase.js";
 
 function toNumber(value: unknown): number | null {
   if (value === undefined || value === null || value === "") {

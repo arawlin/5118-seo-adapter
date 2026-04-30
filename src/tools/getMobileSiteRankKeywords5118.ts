@@ -1,10 +1,17 @@
 import { z } from "zod";
 import { normalizeMobileSiteRankKeywordsResponse } from "../normalizers/siteInsights.js";
-import { createSiteRankKeywordsHandler } from "./siteRankKeywordsBase.js";
+import {
+  createSiteRankKeywordsHandler,
+  SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA,
+} from "./siteRankKeywordsBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { SiteRankKeywordsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
+import type { SiteRankKeywordsData } from "./siteRankKeywordsBase.js";
 
 export const GET_MOBILE_SITE_RANK_KEYWORDS_5118_INPUT_SCHEMA = {
   url: z
@@ -31,6 +38,9 @@ const CONFIG = {
   normalize: normalizeMobileSiteRankKeywordsResponse,
 } as const;
 
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
+
 export function registerGetMobileSiteRankKeywords5118Tool(
   registerTool: RegisterTool,
   toToolResult: ToToolResult,
@@ -41,10 +51,12 @@ export function registerGetMobileSiteRankKeywords5118Tool(
       title: "Get Mobile Site Rank Keywords 5118",
       description: "Sync mobile site rank keyword export via 5118 /keyword/mobile/v2.",
       inputSchema: GET_MOBILE_SITE_RANK_KEYWORDS_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[CONFIG.toolName],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(CONFIG.toolName, await getMobileSiteRankKeywords5118Handler(input)),
+    async (input) => {
+      const payload = await getMobileSiteRankKeywords5118Handler(input);
+      return toToolResult(validateToolOutputPayload(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

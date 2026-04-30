@@ -6,9 +6,13 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeSiteWeightResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { SiteWeightData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  STRING_OR_NULL_OUTPUT_SCHEMA,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
 
 export const GET_SITE_WEIGHT_5118_INPUT_SCHEMA = {
   url: z
@@ -16,6 +20,20 @@ export const GET_SITE_WEIGHT_5118_INPUT_SCHEMA = {
     .min(1)
     .describe("Required domain or host to inspect for 5118 weight values."),
 } as const;
+
+export const SITE_WEIGHT_ITEM_OUTPUT_SCHEMA = z.object({
+  type: STRING_OR_NULL_OUTPUT_SCHEMA,
+  weight: STRING_OR_NULL_OUTPUT_SCHEMA,
+});
+
+export const SITE_WEIGHT_DATA_OUTPUT_SCHEMA = z.object({
+  weights: z.array(SITE_WEIGHT_ITEM_OUTPUT_SCHEMA),
+});
+
+export type SiteWeightItem = z.infer<typeof SITE_WEIGHT_ITEM_OUTPUT_SCHEMA>;
+export type SiteWeightData = z.infer<typeof SITE_WEIGHT_DATA_OUTPUT_SCHEMA>;
+export type GetSiteWeight5118Item = SiteWeightItem;
+export type GetSiteWeight5118Data = SiteWeightData;
 
 export type GetSiteWeight5118Input = z.infer<
   z.ZodObject<typeof GET_SITE_WEIGHT_5118_INPUT_SCHEMA>
@@ -25,6 +43,9 @@ export type GetSiteWeightInput = GetSiteWeight5118Input;
 const TOOL_NAME = "get_site_weight_5118";
 const API_NAME = "Site 5118 Weight API";
 const ENDPOINT = "/weight";
+
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_WEIGHT_DATA_OUTPUT_SCHEMA);
+
 
 export function registerGetSiteWeight5118Tool(
   registerTool: RegisterTool,
@@ -36,9 +57,12 @@ export function registerGetSiteWeight5118Tool(
       title: "Get Site Weight 5118",
       description: "Sync site weight lookup via 5118 /weight.",
       inputSchema: GET_SITE_WEIGHT_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) => toToolResult(TOOL_NAME, await getSiteWeight5118Handler(input)),
+    async (input) => {
+      const payload = await getSiteWeight5118Handler(input);
+      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 

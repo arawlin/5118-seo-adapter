@@ -1,9 +1,16 @@
 import { z } from "zod";
-import { createTopSiteSnapshotHandler } from "./topSiteSnapshotBase.js";
+import {
+  createTopSiteSnapshotHandler,
+  TOP_SITE_SNAPSHOTS_DATA_OUTPUT_SCHEMA,
+} from "./topSiteSnapshotBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
-import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
-import type { TopSiteSnapshotsData } from "../types/toolOutputSchemas.js";
-import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
+import {
+  createResponseOutputSchema,
+  validateToolOutputPayload,
+  type RegisterTool,
+  type ToToolResult,
+} from "./toolRegistration.js";
+import type { TopSiteSnapshotsData } from "./topSiteSnapshotBase.js";
 
 export const GET_MOBILE_TOP50_SITES_5118_INPUT_SCHEMA = {
   keywords: z
@@ -50,6 +57,9 @@ const CONFIG = {
   maxCheckRow: 100,
 } as const;
 
+export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(TOP_SITE_SNAPSHOTS_DATA_OUTPUT_SCHEMA);
+
+
 export function registerGetMobileTop50Sites5118Tool(
   registerTool: RegisterTool,
   toToolResult: ToToolResult,
@@ -60,10 +70,12 @@ export function registerGetMobileTop50Sites5118Tool(
       title: "Get Mobile Top50 Sites 5118",
       description: "Async mobile top-50 site snapshot via 5118 /keywordrank/baidumobile.",
       inputSchema: GET_MOBILE_TOP50_SITES_5118_INPUT_SCHEMA,
-      outputSchema: TOOL_OUTPUT_SCHEMAS[CONFIG.toolName],
+      outputSchema: TOOL_OUTPUT_SCHEMA,
     },
-    async (input) =>
-      toToolResult(CONFIG.toolName, await getMobileTop50Sites5118Handler(input)),
+    async (input) => {
+      const payload = await getMobileTop50Sites5118Handler(input);
+      return toToolResult(validateToolOutputPayload(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload));
+    },
   );
 }
 
