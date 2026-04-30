@@ -60,14 +60,13 @@ function normalizeSiteWeightResponse(raw: unknown): SiteWeightData {
   const data = asRecord(root.data);
   const list = asArray(data.result);
 
-  // Vendor spec: each row is a single-key object like { "BaiduPCWeight": "5" }.
+  // Vendor real shape: each row is { type: "BaiduPCWeight", weight: "1+" }.
   return {
     weights: list.map((item) => {
       const record = asRecord(item);
-      const [entryType, entryWeight] = Object.entries(record)[0] ?? [];
       return {
-        type: toStringOrNull(entryType),
-        weight: toStringOrNull(entryWeight),
+        type: toStringOrNull(record.type),
+        weight: toStringOrNull(record.weight),
       };
     }),
   };
