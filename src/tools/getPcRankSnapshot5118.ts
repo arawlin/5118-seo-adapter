@@ -55,7 +55,7 @@ export const GET_PC_RANK_SNAPSHOT_5118_INPUT_SCHEMA = {
     .number()
     .positive()
     .optional()
-    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 60."),
+    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 10."),
 } as const;
 
 export type GetPcRankSnapshot5118Input = z.infer<

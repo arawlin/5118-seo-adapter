@@ -49,7 +49,7 @@ export const GET_MOBILE_TOP50_SITES_5118_INPUT_SCHEMA = {
     .number()
     .positive()
     .optional()
-    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 60."),
+    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 10."),
 } as const;
 
 export type GetMobileTop50Sites5118Input = z.infer<
