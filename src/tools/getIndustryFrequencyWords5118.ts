@@ -4,7 +4,6 @@ import { getErrcode, map5118Error } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeIndustryFrequencyWordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
@@ -15,6 +14,7 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
 export const GET_INDUSTRY_FREQUENCY_WORDS_5118_INPUT_SCHEMA = {
   keyword: z
@@ -48,6 +48,23 @@ const API_NAME = "Industry Frequency Analysis";
 const ENDPOINT = "/tradeseg";
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(FREQUENCY_WORDS_DATA_OUTPUT_SCHEMA);
+
+function normalizeIndustryFrequencyWordsResponse(raw: unknown): FrequencyWordsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.words);
+
+  return {
+    frequencyWords: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        word: toStringOrNull(record.word ?? record.keyword ?? record.text),
+        ratio: toNumber(record.ratio ?? record.percent),
+        count: toNumber(record.count ?? record.num),
+      };
+    }),
+  };
+}
 
 
 export function registerGetIndustryFrequencyWords5118Tool(

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { normalizePcSiteRankKeywordsResponse } from "../normalizers/siteInsights.js";
 import {
   createSiteRankKeywordsHandler,
   SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA,
@@ -35,7 +34,7 @@ const CONFIG = {
   toolName: "get_pc_site_rank_keywords_5118",
   apiName: "PC Site Rank Keywords Export API v2",
   endpoint: "/keyword/pc/v2",
-  normalize: normalizePcSiteRankKeywordsResponse,
+  dataKeys: ["baidupc", "pc"],
 } as const;
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA);

@@ -4,7 +4,6 @@ import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeSuggestTermsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
@@ -13,6 +12,7 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toStringOrNull } from "./normalizationUtils.js";
 
 export const SUGGEST_PLATFORM_VALUES = [
   "baidu",
@@ -73,6 +73,41 @@ const API_NAME = "Suggestion Mining";
 const ENDPOINT = "/suggest/list";
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SUGGEST_TERMS_DATA_OUTPUT_SCHEMA);
+
+function normalizeSuggestTermsResponse(raw: unknown): SuggestTermsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.suggestions);
+
+  return {
+    suggestions: list.map((item) => {
+      if (typeof item === "string") {
+        return {
+          term: item,
+          sourceWord: item,
+          promotedTerm: item,
+          platform: null,
+          addTime: null,
+        };
+      }
+
+      const record = asRecord(item);
+      return {
+        term: toStringOrNull(
+          record.promote_word ?? record.promoteWord ?? record.word ?? record.keyword ?? record.term,
+        ),
+        sourceWord: toStringOrNull(
+          record.word ?? record.keyword ?? record.source_word ?? record.sourceWord,
+        ),
+        promotedTerm: toStringOrNull(
+          record.promote_word ?? record.promoteWord ?? record.term ?? record.word ?? record.keyword,
+        ),
+        platform: toStringOrNull(record.platform),
+        addTime: toStringOrNull(record.add_time ?? record.addTime),
+      };
+    }),
+  };
+}
 
 
 export function registerGetSuggestTerms5118Tool(

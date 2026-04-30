@@ -7,12 +7,12 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeRankSnapshotResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
 import {
   NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
   STRING_OR_NULL_OUTPUT_SCHEMA,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
 const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 60;
 
@@ -64,6 +64,40 @@ interface RankSnapshotConfig {
 interface RankSnapshotMeta {
   taskId?: string | number;
   dataReady: boolean;
+}
+
+function normalizeRankResultItem(rankItem: unknown): RankSnapshotResultItem {
+  const rankRecord = asRecord(rankItem);
+  return {
+    siteUrl: toStringOrNull(rankRecord.site_url ?? rankRecord.siteUrl),
+    rank: toNumber(rankRecord.rank),
+    pageTitle: toStringOrNull(rankRecord.page_title ?? rankRecord.pageTitle),
+    pageUrl: toStringOrNull(rankRecord.page_url ?? rankRecord.pageUrl),
+    top100: toNumber(rankRecord.top100),
+    siteWeight: toStringOrNull(rankRecord.site_weight ?? rankRecord.siteWeight),
+  };
+}
+
+function normalizeRankSnapshotResponse(raw: unknown): RankSnapshotData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.keywordmonitor).length > 0 ? asArray(data.keywordmonitor) : asArray(data.list);
+
+  return {
+    rankings: list.map((item) => {
+      const record = asRecord(item);
+      const ranks = asArray(record.ranks);
+
+      return {
+        keyword: toStringOrNull(record.keyword ?? record.word),
+        searchEngine: toStringOrNull(record.search_engine ?? record.searchEngine),
+        ip: toStringOrNull(record.ip),
+        area: toStringOrNull(record.area),
+        network: toStringOrNull(record.network),
+        ranks: ranks.map((rankItem) => normalizeRankResultItem(rankItem)),
+      };
+    }),
+  };
 }
 
 function extractTaskIdFromRoot(root: Record<string, unknown>): string | number | undefined {

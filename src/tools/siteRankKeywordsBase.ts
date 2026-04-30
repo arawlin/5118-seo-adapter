@@ -2,7 +2,7 @@ import { z } from "zod";
 import { assertApiKey, type ApiToolName } from "../config/apiKeyRegistry.js";
 import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
-import { createResponseEnvelope } from "../lib/responseEnvelope.js";
+import { createPagination, createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
@@ -11,6 +11,13 @@ import {
   PAGINATION_OUTPUT_SCHEMA,
   STRING_OR_NULL_OUTPUT_SCHEMA,
 } from "./toolRegistration.js";
+import {
+  asArray,
+  asRecord,
+  firstArray,
+  toNumber,
+  toStringOrNull,
+} from "./normalizationUtils.js";
 
 export interface SiteRankKeywordsInput {
   url: string;
@@ -56,7 +63,53 @@ interface SiteRankKeywordsConfig {
   toolName: ApiToolName;
   apiName: string;
   endpoint: string;
-  normalize: (raw: unknown) => SiteRankKeywordsData;
+  dataKeys: readonly string[];
+}
+
+function normalizeSiteRankKeywordRecord(item: unknown): SiteRankKeywordItem {
+  const record = asRecord(item);
+  return {
+    keyword: toStringOrNull(record.keyword ?? record.word),
+    rank: toNumber(record.rank),
+    pageTitle: toStringOrNull(record.page_title ?? record.pageTitle),
+    pageUrl: toStringOrNull(record.page_url ?? record.pageUrl ?? record.url),
+    bidCompanyCount: toNumber(
+      record.bidword_companycount ?? record.bidword_company_count ?? record.bidCompanyCount,
+    ),
+    longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
+    index: toNumber(record.index),
+    mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
+    haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
+    douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
+    toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
+    competition: toNumber(record.bidword_kwc ?? record.competition),
+    pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pcSearchVolume),
+    mobileSearchVolume: toNumber(record.bidword_wisepv ?? record.mobileSearchVolume),
+    semReason: toStringOrNull(record.sem_reason ?? record.semReason),
+    semPrice: toStringOrNull(record.sem_price ?? record.semPrice),
+    recommendedBidAvg: toNumber(
+      record.bidword_recommend_price_avg ?? record.recommendedBidAvg,
+    ),
+    googleIndex: toNumber(record.google_index ?? record.googleIndex),
+    kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
+    weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+  };
+}
+
+function normalizeSiteRankKeywords(raw: unknown, dataKeys: readonly string[]): SiteRankKeywordsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = firstArray(data, [...dataKeys, "list"]);
+
+  return {
+    items: list.map((item) => normalizeSiteRankKeywordRecord(item)),
+    pagination: createPagination(
+      data.page_index ?? data.pageIndex,
+      data.page_size ?? data.pageSize,
+      data.page_count ?? data.pageCount,
+      data.total,
+    ),
+  };
 }
 
 export async function createSiteRankKeywordsHandler(
@@ -87,7 +140,7 @@ export async function createSiteRankKeywordsHandler(
   }
 
   const decoded = decodeResponseStrings(raw);
-  const normalized = config.normalize(decoded);
+  const normalized = normalizeSiteRankKeywords(decoded, config.dataKeys);
 
   return createResponseEnvelope({
     tool: config.toolName,

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { normalizeMobileSiteRankKeywordsResponse } from "../normalizers/siteInsights.js";
 import {
   createSiteRankKeywordsHandler,
   SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA,
@@ -35,7 +34,7 @@ const CONFIG = {
   toolName: "get_mobile_site_rank_keywords_5118",
   apiName: "Mobile Site Rank Keywords Export API v2",
   endpoint: "/keyword/mobile/v2",
-  normalize: normalizeMobileSiteRankKeywordsResponse,
+  dataKeys: ["baidumobile", "mobile"],
 } as const;
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA);

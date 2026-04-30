@@ -2,9 +2,8 @@ import { z } from "zod";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
-import { createResponseEnvelope } from "../lib/responseEnvelope.js";
+import { createPagination, createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeLongtailKeywordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
@@ -16,6 +15,7 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
 export const GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA = {
   keyword: z
@@ -94,6 +94,54 @@ const API_NAME = "Massive Long-tail Keyword Mining v2";
 const ENDPOINT = "/keyword/word/v2";
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(LONGTAIL_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
+function normalizeLongtailKeywordsResponse(raw: unknown): LongtailKeywordsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.keywords);
+
+  const keywords = list.map((item) => {
+    const record = asRecord(item);
+    return {
+      keyword: toStringOrNull(record.keyword ?? record.word),
+      index: toNumber(record.index),
+      mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
+      haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
+      douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
+      toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
+      longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
+      bidCompanyCount: toNumber(
+        record.bidword_company_count ?? record.bid_company_count ?? record.bidCompanyCount,
+      ),
+      pageUrl: toStringOrNull(record.page_url ?? record.pageUrl),
+      competition: toNumber(record.bidword_kwc ?? record.competition ?? record.compete),
+      pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pc_pv ?? record.pcSearchVolume),
+      mobileSearchVolume: toNumber(
+        record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
+      ),
+      semReason: toStringOrNull(record.sem_reason ?? record.semReason),
+      semPrice: toStringOrNull(record.sem_price ?? record.semPrice),
+      semRecommendPriceAvg: toNumber(
+        record.sem_recommend_price_avg ??
+          record.bidword_recommend_price_avg ??
+          record.semRecommendPriceAvg,
+      ),
+      googleIndex: toNumber(record.google_index ?? record.googleIndex),
+      kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
+      weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+    };
+  });
+
+  return {
+    keywords,
+    pagination: createPagination(
+      data.page_index ?? data.pageIndex,
+      data.page_size ?? data.pageSize,
+      data.page_count ?? data.pageCount,
+      data.total,
+    ),
+  };
+}
 
 
 export function registerGetLongtailKeywords5118Tool(

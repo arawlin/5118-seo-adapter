@@ -2,9 +2,8 @@ import { z } from "zod";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
-import { createResponseEnvelope } from "../lib/responseEnvelope.js";
+import { createPagination, createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeBidSitesResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
@@ -15,6 +14,13 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import {
+  asArray,
+  asRecord,
+  firstArray,
+  toNumber,
+  toStringOrNull,
+} from "./normalizationUtils.js";
 
 export const GET_BID_SITES_5118_INPUT_SCHEMA = {
   keyword: z
@@ -73,6 +79,36 @@ const API_NAME = "Bid Site Mining API";
 const ENDPOINT = "/bidsite";
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(BID_SITES_DATA_OUTPUT_SCHEMA);
+
+function normalizeBidSitesResponse(raw: unknown): BidSitesData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = firstArray(data, ["keyword_bidsite", "items", "list"]);
+
+  return {
+    items: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        title: toStringOrNull(record.title),
+        intro: toStringOrNull(record.intro),
+        siteTitle: toStringOrNull(record.urltitle ?? record.siteTitle),
+        siteUrl: toStringOrNull(record.url ?? record.siteUrl),
+        fullUrl: toStringOrNull(record.fullurl ?? record.fullUrl),
+        companyName: toStringOrNull(record.companyname ?? record.companyName),
+        baiduPcWeight: toStringOrNull(record.baidupcweight ?? record.baiduPcWeight),
+        bidCount: toNumber(record.bidCount ?? record.bid_count),
+        lastSeenAt: toStringOrNull(record.join_date ?? record.lastSeenAt),
+        firstSeenAt: toStringOrNull(record.firstfindtime ?? record.firstSeenAt),
+      };
+    }),
+    pagination: createPagination(
+      data.page_index ?? data.pageIndex,
+      data.page_size ?? data.pageSize,
+      data.page_count ?? data.pageCount,
+      data.total,
+    ),
+  };
+}
 
 
 export function registerGetBidSites5118Tool(

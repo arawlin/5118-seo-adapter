@@ -6,7 +6,6 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeUrlIndexingResponse } from "../normalizers/siteInsights.js";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
@@ -17,6 +16,7 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
 export const CHECK_URL_INDEXING_5118_INPUT_SCHEMA = {
   urls: z
@@ -75,6 +75,30 @@ const ENDPOINT = "/include";
 const DEFAULT_INDEXING_POLL_INTERVAL_SECONDS = 60;
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(URL_INDEXING_DATA_OUTPUT_SCHEMA);
+
+function normalizeUrlIndexingResponse(raw: unknown): UrlIndexingData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.include_result).length > 0
+    ? asArray(data.include_result)
+    : asArray(data.list);
+
+  return {
+    items: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        url: toStringOrNull(record.url),
+        status: toNumber(record.status ?? record.include_status),
+        title: toStringOrNull(record.title),
+        snapshotTime: toStringOrNull(record.time ?? record.snapshot_time ?? record.snapshotTime),
+      };
+    }),
+    total: toNumber(data.total ?? root.total),
+    checkStatus: toNumber(data.check_status ?? data.checkStatus),
+    submitTime: toStringOrNull(data.submit_time ?? data.submitTime),
+    finishedTime: toStringOrNull(data.finished_time ?? data.finishedTime),
+  };
+}
 
 
 export function registerCheckUrlIndexing5118Tool(

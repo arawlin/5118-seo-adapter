@@ -98,8 +98,8 @@ implementation begins.
 - Pagination mapper: normalizes `page_index`, `page_size`, `page_count`, and
   `total`.
 - Error mapper: translates vendor error codes into stable MCP-facing errors.
-- Response normalizer: converts vendor field names into predictable top-level
-  structures while preserving `raw`.
+- Tool-local response normalizer: each tool (or shared tool base) converts
+  vendor field names into predictable structures while preserving `raw`.
 - Rate-limit guard: handles retryable quota and timeout errors.
 - Test fixtures: stores stable success, pending, invalid-input, and auth-error
   samples.

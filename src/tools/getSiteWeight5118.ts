@@ -4,7 +4,6 @@ import { getErrcode, map5118Error } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeSiteWeightResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
@@ -13,6 +12,7 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toStringOrNull } from "./normalizationUtils.js";
 
 export const GET_SITE_WEIGHT_5118_INPUT_SCHEMA = {
   url: z
@@ -45,6 +45,30 @@ const API_NAME = "Site 5118 Weight API";
 const ENDPOINT = "/weight";
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_WEIGHT_DATA_OUTPUT_SCHEMA);
+
+function normalizeSiteWeightResponse(raw: unknown): SiteWeightData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.result);
+
+  return {
+    weights: list.map((item) => {
+      const record = asRecord(item);
+      const type = toStringOrNull(record.type);
+      const weight = toStringOrNull(record.weight);
+
+      if (type || weight) {
+        return { type, weight };
+      }
+
+      const [entryType, entryWeight] = Object.entries(record)[0] ?? [];
+      return {
+        type: toStringOrNull(entryType),
+        weight: toStringOrNull(entryWeight),
+      };
+    }),
+  };
+}
 
 
 export function registerGetSiteWeight5118Tool(

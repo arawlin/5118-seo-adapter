@@ -7,10 +7,16 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeTopSiteSnapshotsResponse } from "../normalizers/siteInsights.js";
 import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
 import { STRING_OR_NULL_OUTPUT_SCHEMA } from "./toolRegistration.js";
 import { RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA } from "./rankSnapshotBase.js";
+import {
+  asArray,
+  asRecord,
+  firstArray,
+  toNumber,
+  toStringOrNull,
+} from "./normalizationUtils.js";
 
 const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 60;
 
@@ -50,6 +56,39 @@ interface TopSiteSnapshotConfig {
 interface TopSiteSnapshotMeta {
   taskId?: string | number;
   dataReady: boolean;
+}
+
+function normalizeRankResultItem(rankItem: unknown): z.infer<typeof RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA> {
+  const rankRecord = asRecord(rankItem);
+  return {
+    siteUrl: toStringOrNull(rankRecord.site_url ?? rankRecord.siteUrl),
+    rank: toNumber(rankRecord.rank),
+    pageTitle: toStringOrNull(rankRecord.page_title ?? rankRecord.pageTitle),
+    pageUrl: toStringOrNull(rankRecord.page_url ?? rankRecord.pageUrl),
+    top100: toNumber(rankRecord.top100),
+    siteWeight: toStringOrNull(rankRecord.site_weight ?? rankRecord.siteWeight),
+  };
+}
+
+function normalizeTopSiteSnapshotsResponse(raw: unknown): TopSiteSnapshotsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = firstArray(data, ["keyword_monitor", "keywordMonitor", "keywordmonitor", "list"]);
+
+  return {
+    siteSnapshots: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        keyword: toStringOrNull(record.keyword ?? record.word),
+        searchEngine: toStringOrNull(record.search_engine ?? record.searchEngine),
+        ip: toStringOrNull(record.ip),
+        area: toStringOrNull(record.area),
+        network: toStringOrNull(record.network),
+        checkedAt: toStringOrNull(record.time ?? record.checkedAt),
+        ranks: asArray(record.ranks).map((rankItem) => normalizeRankResultItem(rankItem)),
+      };
+    }),
+  };
 }
 
 function extractTaskIdFromRoot(root: Record<string, unknown>): string | number | undefined {

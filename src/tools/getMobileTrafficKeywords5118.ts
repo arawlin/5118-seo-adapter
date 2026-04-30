@@ -7,9 +7,9 @@ import {
 import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
-import { normalizeMobileTrafficKeywordsResponse } from "../normalizers/keywordMetrics.js";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import { createPagination } from "../lib/responseEnvelope.js";
 import {
   createResponseOutputSchema,
   NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
@@ -19,6 +19,7 @@ import {
   type RegisterTool,
   type ToToolResult,
 } from "./toolRegistration.js";
+import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
 export const GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA = {
   keyword: z
@@ -89,6 +90,35 @@ const API_NAME = "Mobile Traffic Keyword Mining";
 const ENDPOINT = "/traffic";
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(MOBILE_TRAFFIC_KEYWORDS_DATA_OUTPUT_SCHEMA);
+
+function normalizeMobileTrafficKeywordsResponse(raw: unknown): MobileTrafficKeywordsData {
+  const root = asRecord(raw);
+  const data = asRecord(root.data);
+  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.keywords);
+
+  return {
+    keywords: list.map((item) => {
+      const record = asRecord(item);
+      return {
+        keyword: toStringOrNull(record.keyword ?? record.word),
+        index: toNumber(record.index),
+        rank: toNumber(record.rank ?? record.position),
+        url: toStringOrNull(record.url),
+        weight: toNumber(record.weight),
+        mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
+        mobileSearchVolume: toNumber(
+          record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
+        ),
+      };
+    }),
+    pagination: createPagination(
+      data.page_index ?? data.pageIndex,
+      data.page_size ?? data.pageSize,
+      data.page_count ?? data.pageCount,
+      data.total,
+    ),
+  };
+}
 
 
 export function registerGetMobileTrafficKeywords5118Tool(
