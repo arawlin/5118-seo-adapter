@@ -126,14 +126,25 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(MOBILE_TRAFFIC_KEYW
 
 function normalizeMobileTrafficKeywordsResponse(raw: unknown): MobileTrafficKeywordsData {
   const root = asRecord(raw);
+  // Vendor spec: `data` is the rows array directly and pagination fields live at the root.
+  // Older internal fixtures wrap rows under `data.list` and pagination inside `data`. Accept both.
+  const dataAsArray = asArray(root.data);
   const data = asRecord(root.data);
-  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.keywords);
+  const list =
+    dataAsArray.length > 0
+      ? dataAsArray
+      : asArray(data.list).length > 0
+        ? asArray(data.list)
+        : asArray(data.keywords);
+
+  const paginationSource = dataAsArray.length > 0 ? root : data;
 
   return {
     keywords: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: toStringOrNull(record.keyword ?? record.word),
+        // Vendor field is `word`; fixtures use `keyword`. Accept both.
+        keyword: toStringOrNull(record.word ?? record.keyword),
         index: toNumber(record.index),
         rank: toNumber(record.rank ?? record.position),
         url: toStringOrNull(record.url),
@@ -145,10 +156,10 @@ function normalizeMobileTrafficKeywordsResponse(raw: unknown): MobileTrafficKeyw
       };
     }),
     pagination: createPagination(
-      data.page_index ?? data.pageIndex,
-      data.page_size ?? data.pageSize,
-      data.page_count ?? data.pageCount,
-      data.total,
+      paginationSource.page_index ?? paginationSource.pageIndex,
+      paginationSource.page_size ?? paginationSource.pageSize,
+      paginationSource.page_count ?? paginationSource.pageCount,
+      paginationSource.total,
     ),
   };
 }

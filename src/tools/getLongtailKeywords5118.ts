@@ -143,7 +143,13 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(LONGTAIL_KEYWORDS_D
 function normalizeLongtailKeywordsResponse(raw: unknown): LongtailKeywordsData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.keywords);
+  // Vendor spec uses `data.word`; older internal fixtures used `data.list`. Accept both.
+  const list =
+    asArray(data.word).length > 0
+      ? asArray(data.word)
+      : asArray(data.list).length > 0
+        ? asArray(data.list)
+        : asArray(data.keywords);
 
   const keywords = list.map((item) => {
     const record = asRecord(item);

@@ -93,8 +93,14 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SUGGEST_TERMS_DATA_
 
 function normalizeSuggestTermsResponse(raw: unknown): SuggestTermsData {
   const root = asRecord(raw);
-  const data = asRecord(root.data);
-  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.suggestions);
+  // Vendor spec returns `data` as an array directly. Older internal fixtures wrapped rows under
+  // `data.list` / `data.suggestions`. Accept both shapes.
+  const list =
+    asArray(root.data).length > 0
+      ? asArray(root.data)
+      : asArray(asRecord(root.data).list).length > 0
+        ? asArray(asRecord(root.data).list)
+        : asArray(asRecord(root.data).suggestions);
 
   return {
     suggestions: list.map((item) => {

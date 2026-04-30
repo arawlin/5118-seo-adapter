@@ -62,16 +62,22 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(FREQUENCY_WORDS_DAT
 
 function normalizeIndustryFrequencyWordsResponse(raw: unknown): FrequencyWordsData {
   const root = asRecord(raw);
-  const data = asRecord(root.data);
-  const list = asArray(data.list).length > 0 ? asArray(data.list) : asArray(data.words);
+  // Vendor spec returns `data` as an array directly. Older internal fixtures wrapped rows under
+  // `data.list` / `data.words`. Accept both shapes.
+  const list =
+    asArray(root.data).length > 0
+      ? asArray(root.data)
+      : asArray(asRecord(root.data).list).length > 0
+        ? asArray(asRecord(root.data).list)
+        : asArray(asRecord(root.data).words);
 
   return {
     frequencyWords: list.map((item) => {
       const record = asRecord(item);
       return {
-        word: toStringOrNull(record.word ?? record.keyword ?? record.text),
-        ratio: toNumber(record.ratio ?? record.percent),
-        count: toNumber(record.count ?? record.num),
+        word: toStringOrNull(record.Word ?? record.word ?? record.keyword ?? record.text),
+        ratio: toNumber(record.Rate ?? record.ratio ?? record.percent),
+        count: toNumber(record.Frequency ?? record.count ?? record.num),
       };
     }),
   };
