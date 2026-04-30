@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
@@ -5,21 +6,61 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeBidKeywordsResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
 import type { BidKeywordsData } from "../types/toolOutputSchemas.js";
+import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
 
-export interface GetBidKeywordsInput {
-  url: string;
-  pageIndex?: number;
-  pageSize?: number;
-  includeHighlight?: boolean;
-}
+export const GET_BID_KEYWORDS_5118_INPUT_SCHEMA = {
+  url: z
+    .string()
+    .min(1)
+    .describe("Required domain or host to inspect for bid keywords."),
+  pageIndex: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Optional 1-based result page number. Defaults to 1."),
+  pageSize: z
+    .number()
+    .int()
+    .positive()
+    .max(500)
+    .optional()
+    .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
+  includeHighlight: z
+    .boolean()
+    .optional()
+    .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
+} as const;
+
+export type GetBidKeywords5118Input = z.infer<
+  z.ZodObject<typeof GET_BID_KEYWORDS_5118_INPUT_SCHEMA>
+>;
+export type GetBidKeywordsInput = GetBidKeywords5118Input;
 
 const TOOL_NAME = "get_bid_keywords_5118";
 const API_NAME = "Site Bid Keywords Mining API v2";
 const ENDPOINT = "/bidword/v2";
 
+export function registerGetBidKeywords5118Tool(
+  registerTool: RegisterTool,
+  toToolResult: ToToolResult,
+): void {
+  registerTool(
+    TOOL_NAME,
+    {
+      title: "Get Bid Keywords 5118",
+      description: "Sync bid keyword mining via 5118 /bidword/v2.",
+      inputSchema: GET_BID_KEYWORDS_5118_INPUT_SCHEMA,
+      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+    },
+    async (input) => toToolResult(TOOL_NAME, await getBidKeywords5118Handler(input)),
+  );
+}
+
 export async function getBidKeywords5118Handler(
-  input: GetBidKeywordsInput,
+  input: GetBidKeywords5118Input,
 ): Promise<ResponseEnvelope<BidKeywordsData>> {
   const pageIndex = input.pageIndex ?? 1;
   const pageSize = input.pageSize ?? 20;

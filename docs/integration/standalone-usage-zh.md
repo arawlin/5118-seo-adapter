@@ -161,17 +161,20 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 ### 结构化输出 Schema
 
 - 每个工具现在都会在 MCP tool 元数据中发布完整的 `outputSchema`。
+- 每个工具在 `src/tools/` 下的注册函数会自行声明该工具的
+  `outputSchema`。
 - 适配器在返回结果前，会先按该工具的 `outputSchema` 校验归一化外壳。
 - 如果校验失败，调用会抛出 MCP 工具错误，而不是返回部分有效的外壳。
 
 ### 结构化输入 Schema
 
-- 现在每个工具的输入 schema 都统一维护在一个注册表模块：
+- 输入 schema 统一通过一个注册表模块对外暴露：
   `src/types/toolInputSchemas.ts`。
-- `src/server.ts` 中的工具注册会直接引用该注册表，而不再为每个工具内联
-  定义 input schema。
-- 下拉词工具的平台枚举也已在该注册表集中维护，避免注册元数据与 handler
-  校验之间出现漂移。
+- 该注册表在 `src/types/` 下独立维护，不依赖 `src/tools/`。
+- 工具模块可在本地注册函数中使用本地 schema；统一校验与契约测试以
+  `src/types/toolInputSchemas.ts` 的规范注册表为准。
+- `src/server.ts` 通过调用各工具本地注册函数完成注册，server 本身只保留
+  编排与一致性校验逻辑。
 
 ### 错误行为
 

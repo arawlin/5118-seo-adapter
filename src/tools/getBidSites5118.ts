@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
@@ -5,21 +6,61 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeBidSitesResponse } from "../normalizers/siteInsights.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
 import type { BidSitesData } from "../types/toolOutputSchemas.js";
+import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
 
-export interface GetBidSitesInput {
-  keyword: string;
-  pageIndex?: number;
-  pageSize?: number;
-  includeHighlight?: boolean;
-}
+export const GET_BID_SITES_5118_INPUT_SCHEMA = {
+  keyword: z
+    .string()
+    .min(1)
+    .describe("Required bid keyword used to discover advertising domains and landing pages."),
+  pageIndex: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Optional 1-based result page number. Defaults to 1."),
+  pageSize: z
+    .number()
+    .int()
+    .positive()
+    .max(500)
+    .optional()
+    .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
+  includeHighlight: z
+    .boolean()
+    .optional()
+    .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
+} as const;
+
+export type GetBidSites5118Input = z.infer<
+  z.ZodObject<typeof GET_BID_SITES_5118_INPUT_SCHEMA>
+>;
+export type GetBidSitesInput = GetBidSites5118Input;
 
 const TOOL_NAME = "get_bid_sites_5118";
 const API_NAME = "Bid Site Mining API";
 const ENDPOINT = "/bidsite";
 
+export function registerGetBidSites5118Tool(
+  registerTool: RegisterTool,
+  toToolResult: ToToolResult,
+): void {
+  registerTool(
+    TOOL_NAME,
+    {
+      title: "Get Bid Sites 5118",
+      description: "Sync bid site mining via 5118 /bidsite.",
+      inputSchema: GET_BID_SITES_5118_INPUT_SCHEMA,
+      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+    },
+    async (input) => toToolResult(TOOL_NAME, await getBidSites5118Handler(input)),
+  );
+}
+
 export async function getBidSites5118Handler(
-  input: GetBidSitesInput,
+  input: GetBidSites5118Input,
 ): Promise<ResponseEnvelope<BidSitesData>> {
   const pageIndex = input.pageIndex ?? 1;
   const pageSize = input.pageSize ?? 20;

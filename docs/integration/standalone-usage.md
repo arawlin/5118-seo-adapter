@@ -162,6 +162,8 @@ Every tool returns a unified envelope:
 ### Structured Output Schema
 
 - Every tool now publishes a full `outputSchema` in MCP tool metadata.
+- Each tool's register function under `src/tools/` declares its own
+  `outputSchema` during registration.
 - Before a tool result is returned, the adapter validates the normalized
   envelope against that tool's `outputSchema`.
 - If the validation fails, the call throws an MCP tool error instead of
@@ -169,12 +171,15 @@ Every tool returns a unified envelope:
 
 ### Structured Input Schema
 
-- Every tool input schema is now maintained in one registry module:
+- Input schemas are exposed through one registry module:
   `src/types/toolInputSchemas.ts`.
-- Tool registration in `src/server.ts` references this registry directly,
-  instead of using per-tool inline input schema objects.
-- The suggest platform enum values are also centralized in that registry to
-  avoid drift between registration metadata and handler validation.
+- The registry module is self-contained under `src/types/` and does not
+  import from `src/tools/`.
+- Tool modules can use local schema objects for tool registration, while
+  contract tests and shared validators use the canonical registry in
+  `src/types/toolInputSchemas.ts`.
+- Tool registration in `src/server.ts` is delegated to tool-local register
+  functions, keeping the server as a thin orchestration layer.
 
 ### Error Behavior
 

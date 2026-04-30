@@ -1,8 +1,52 @@
-import { createRankSnapshotHandler, type RankSnapshotInput } from "./rankSnapshotBase.js";
+import { z } from "zod";
+import { createRankSnapshotHandler } from "./rankSnapshotBase.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
 import type { RankSnapshotData } from "../types/toolOutputSchemas.js";
+import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
 
-export type GetPcRankSnapshotInput = RankSnapshotInput;
+export const GET_PC_RANK_SNAPSHOT_5118_INPUT_SCHEMA = {
+  url: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Optional target domain for submit or wait mode. Required unless taskId is used to resume polling."),
+  keywords: z
+    .array(z.string().min(1))
+    .max(50)
+    .optional()
+    .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
+  checkRow: z
+    .number()
+    .int()
+    .positive()
+    .max(50)
+    .optional()
+    .describe("Optional maximum ranking depth to inspect. Maximum 50 for the PC endpoint."),
+  executionMode: z
+    .enum(["submit", "poll", "wait"])
+    .optional()
+    .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
+  taskId: z
+    .union([z.string(), z.number()])
+    .optional()
+    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+  maxWaitSeconds: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Optional maximum client-side wait time in seconds for wait mode."),
+  pollIntervalSeconds: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
+} as const;
+
+export type GetPcRankSnapshot5118Input = z.infer<
+  z.ZodObject<typeof GET_PC_RANK_SNAPSHOT_5118_INPUT_SCHEMA>
+>;
+export type GetPcRankSnapshotInput = GetPcRankSnapshot5118Input;
 
 const CONFIG = {
   toolName: "get_pc_rank_snapshot_5118",
@@ -11,8 +55,24 @@ const CONFIG = {
   maxCheckRow: 50,
 } as const;
 
+export function registerGetPcRankSnapshot5118Tool(
+  registerTool: RegisterTool,
+  toToolResult: ToToolResult,
+): void {
+  registerTool(
+    CONFIG.toolName,
+    {
+      title: "Get PC Rank Snapshot 5118",
+      description: "Async PC rank snapshot via 5118 /morerank/baidupc.",
+      inputSchema: GET_PC_RANK_SNAPSHOT_5118_INPUT_SCHEMA,
+      outputSchema: TOOL_OUTPUT_SCHEMAS[CONFIG.toolName],
+    },
+    async (input) => toToolResult(CONFIG.toolName, await getPcRankSnapshot5118Handler(input)),
+  );
+}
+
 export async function getPcRankSnapshot5118Handler(
-  input: GetPcRankSnapshotInput,
+  input: GetPcRankSnapshot5118Input,
 ): Promise<ResponseEnvelope<RankSnapshotData>> {
   return createRankSnapshotHandler(input, CONFIG);
 }

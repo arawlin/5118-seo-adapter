@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { API_TOOL_NAMES } from "../src/config/apiKeyRegistry.js";
 import { createServer } from "../src/server.js";
 import { TOOL_INPUT_SCHEMAS } from "../src/types/toolInputSchemas.js";
+import { TOOL_OUTPUT_SCHEMAS } from "../src/types/toolOutputSchemas.js";
 
 function createRegisterToolSpy() {
   return vi
@@ -48,10 +49,12 @@ describe("server tool registration contract", () => {
 
     const registerCalls = registerSpy.mock.calls as Array<[string, unknown, unknown]>;
 
-    for (const [, config] of registerCalls) {
+    for (const [name, config] of registerCalls) {
+      const toolName = name as keyof typeof TOOL_OUTPUT_SCHEMAS;
       const toolConfig = config as { outputSchema?: Record<string, unknown> };
       expect(toolConfig.outputSchema).toBeDefined();
       expect(Object.keys(toolConfig.outputSchema ?? {}).length).toBeGreaterThan(0);
+      expect(toolConfig.outputSchema).toBe(TOOL_OUTPUT_SCHEMAS[toolName]);
     }
   });
 
@@ -65,7 +68,11 @@ describe("server tool registration contract", () => {
     for (const [name, config] of registerCalls) {
       const toolName = name as keyof typeof TOOL_INPUT_SCHEMAS;
       const toolConfig = config as { inputSchema?: Record<string, unknown> };
-      expect(toolConfig.inputSchema).toBe(TOOL_INPUT_SCHEMAS[toolName]);
+      expect(toolConfig.inputSchema).toBeDefined();
+      expect(Object.keys(toolConfig.inputSchema ?? {}).length).toBeGreaterThan(0);
+      expect(Object.keys(toolConfig.inputSchema ?? {})).toEqual(
+        Object.keys(TOOL_INPUT_SCHEMAS[toolName]),
+      );
     }
   });
 });

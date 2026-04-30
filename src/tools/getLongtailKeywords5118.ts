@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import { getErrcode, map5118Error, ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
@@ -5,24 +6,75 @@ import { createResponseEnvelope } from "../lib/responseEnvelope.js";
 import { decodeResponseStrings, encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeLongtailKeywordsResponse } from "../normalizers/keywordDiscovery.js";
 import type { ResponseEnvelope } from "../types/toolContracts.js";
+import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
 import type { LongtailKeywordsData } from "../types/toolOutputSchemas.js";
+import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
 
-export interface GetLongtailKeywordsInput {
-  keyword: string;
-  pageIndex?: number;
-  pageSize?: number;
-  sortField?: string;
-  sortType?: "asc" | "desc";
-  filter?: string;
-  filterDate?: string;
-}
+export const GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA = {
+  keyword: z
+    .string()
+    .min(1)
+    .describe("Required seed keyword. This is the root term that 5118 expands into long-tail keywords."),
+  pageIndex: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Optional 1-based result page number. Use it to read a later page of normalized keywords. Defaults to 1."),
+  pageSize: z
+    .number()
+    .int()
+    .positive()
+    .max(100)
+    .optional()
+    .describe("Optional number of rows per page. Maximum 100. Larger values return more keywords per request."),
+  sortField: z
+    .string()
+    .optional()
+    .describe("Optional vendor sort selector. Common values: 2=bidCompanyCount advertiser count, 3=longKeywordCount long-tail count, 4=index PC search index, 5=mobileIndex mobile search index."),
+  sortType: z
+    .enum(["asc", "desc"])
+    .optional()
+    .describe("Optional sort direction for sortField. asc=low to high, desc=high to low."),
+  filter: z
+    .string()
+    .optional()
+    .describe("Optional vendor quick filter selector. Common values: 1=all results, 2=traffic words, 9=keywords with bidding ads."),
+  filterDate: z
+    .string()
+    .optional()
+    .describe("Optional vendor filter date in yyyy-MM-dd format. Use it when you need a specific date snapshot supported by 5118."),
+} as const;
+
+export type GetLongtailKeywords5118Input = z.infer<
+  z.ZodObject<typeof GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA>
+>;
+export type GetLongtailKeywordsInput = GetLongtailKeywords5118Input;
 
 const TOOL_NAME = "get_longtail_keywords_5118";
 const API_NAME = "Massive Long-tail Keyword Mining v2";
 const ENDPOINT = "/keyword/word/v2";
 
+export function registerGetLongtailKeywords5118Tool(
+  registerTool: RegisterTool,
+  toToolResult: ToToolResult,
+): void {
+  registerTool(
+    TOOL_NAME,
+    {
+      title: "Get Longtail Keywords 5118",
+      description:
+        "Sync long-tail keyword mining via 5118 /keyword/word/v2. Input fields: keyword, pageIndex, pageSize<=100, sortField, sortType, filter, filterDate.",
+      inputSchema: GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA,
+      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+    },
+    async (input) =>
+      toToolResult(TOOL_NAME, await getLongtailKeywords5118Handler(input)),
+  );
+}
+
 export async function getLongtailKeywords5118Handler(
-  input: GetLongtailKeywordsInput,
+  input: GetLongtailKeywords5118Input,
 ): Promise<ResponseEnvelope<LongtailKeywordsData>> {
   if ((input.pageSize ?? 20) > 100) {
     throw new ToolError("INPUT_LIMIT", "pageSize must be less than or equal to 100.");

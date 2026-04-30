@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { assertApiKey } from "../config/apiKeyRegistry.js";
 import {
   DEFAULT_KEYWORD_METRICS_MAX_WAIT_SECONDS,
@@ -7,17 +8,64 @@ import { ToolError } from "../lib/errorMapper.js";
 import { postForm } from "../lib/http5118Client.js";
 import { encodeInputFields } from "../lib/urlCodec.js";
 import { normalizeKeywordMetricsResponse } from "../normalizers/keywordMetrics.js";
-import type { AsyncControlInput, ResponseEnvelope } from "../types/toolContracts.js";
+import type { ResponseEnvelope } from "../types/toolContracts.js";
+import { TOOL_OUTPUT_SCHEMAS } from "../types/toolOutputSchemas.js";
 import type { KeywordMetricsData } from "../types/toolOutputSchemas.js";
+import type { RegisterTool, ToToolResult } from "./toolRegistration.js";
 
-export interface GetKeywordMetricsInput extends AsyncControlInput {
-  keywords?: string[];
-}
+export const GET_KEYWORD_METRICS_5118_INPUT_SCHEMA = {
+  keywords: z
+    .array(z.string().min(1))
+    .max(50)
+    .optional()
+    .describe("Optional keyword list to submit to 5118. Required for submit mode, and also required for wait mode when taskId is not provided. Maximum 50 keywords per task."),
+  executionMode: z
+    .enum(["submit", "poll", "wait"])
+    .optional()
+    .describe("Optional async execution mode. submit=create a vendor task and return taskId; poll=query an existing task by taskId; wait=submit or resume a task and keep polling until completion or timeout."),
+  taskId: z
+    .union([z.string(), z.number()])
+    .optional()
+    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling an already-created task."),
+  maxWaitSeconds: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Optional maximum client-side wait time in seconds for wait mode. The tool stops polling and returns the latest pending state when this limit is reached."),
+  pollIntervalSeconds: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds when omitted."),
+} as const;
+
+export type GetKeywordMetrics5118Input = z.infer<
+  z.ZodObject<typeof GET_KEYWORD_METRICS_5118_INPUT_SCHEMA>
+>;
+export type GetKeywordMetricsInput = GetKeywordMetrics5118Input;
 
 const TOOL_NAME = "get_keyword_metrics_5118";
 const API_NAME = "Keyword Search Volume Info API v2";
 const ENDPOINT = "/keywordparam/v2";
 const DEFAULT_KEYWORD_METRICS_POLL_INTERVAL_SECONDS = 60;
+
+export function registerGetKeywordMetrics5118Tool(
+  registerTool: RegisterTool,
+  toToolResult: ToToolResult,
+): void {
+  registerTool(
+    TOOL_NAME,
+    {
+      title: "Get Keyword Metrics 5118",
+      description:
+        "Async keyword metrics via 5118 /keywordparam/v2. Input fields: keywords<=50, executionMode submit|poll|wait, taskId, maxWaitSeconds, pollIntervalSeconds.",
+      inputSchema: GET_KEYWORD_METRICS_5118_INPUT_SCHEMA,
+      outputSchema: TOOL_OUTPUT_SCHEMAS[TOOL_NAME],
+    },
+    async (input) =>
+      toToolResult(TOOL_NAME, await getKeywordMetrics5118Handler(input)),
+  );
+}
 
 interface KeywordMetricsResponseMeta {
   taskId?: string | number;
@@ -80,7 +128,7 @@ function extractTaskId(raw: unknown): string | number | undefined {
 }
 
 export async function getKeywordMetrics5118Handler(
-  input: GetKeywordMetricsInput,
+  input: GetKeywordMetrics5118Input,
 ): Promise<ResponseEnvelope<KeywordMetricsData>> {
   const mode = input.executionMode ?? "wait";
   const keywords = input.keywords ?? [];
