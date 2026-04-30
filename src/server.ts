@@ -22,20 +22,6 @@ export const REGISTERED_TOOL_NAMES = API_TOOL_NAMES;
 type RegisteredToolName = (typeof REGISTERED_TOOL_NAMES)[number];
 type RegisterToolMethod = McpServer["registerTool"];
 
-function toToolResult(payload: Record<string, unknown>) {
-  const structuredContent = payload;
-
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(structuredContent),
-      },
-    ],
-    structuredContent,
-  };
-}
-
 function createToolRegistrar(server: McpServer) {
   const registeredToolNames = new Set<RegisteredToolName>();
 
@@ -72,22 +58,22 @@ export function createServer(): McpServer {
 
   const { registerTool, assertToolCoverage } = createToolRegistrar(server);
 
-  registerGetLongtailKeywords5118Tool(registerTool, toToolResult);
-  registerGetIndustryFrequencyWords5118Tool(registerTool, toToolResult);
-  registerGetSuggestTerms5118Tool(registerTool, toToolResult);
-  registerGetKeywordMetrics5118Tool(registerTool, toToolResult);
-  registerGetMobileTrafficKeywords5118Tool(registerTool, toToolResult);
-  registerGetDomainRankKeywords5118Tool(registerTool, toToolResult);
-  registerGetBidKeywords5118Tool(registerTool, toToolResult);
-  registerGetPcSiteRankKeywords5118Tool(registerTool, toToolResult);
-  registerGetMobileSiteRankKeywords5118Tool(registerTool, toToolResult);
-  registerGetBidSites5118Tool(registerTool, toToolResult);
-  registerGetSiteWeight5118Tool(registerTool, toToolResult);
-  registerGetPcRankSnapshot5118Tool(registerTool, toToolResult);
-  registerGetMobileRankSnapshot5118Tool(registerTool, toToolResult);
-  registerGetPcTop50Sites5118Tool(registerTool, toToolResult);
-  registerGetMobileTop50Sites5118Tool(registerTool, toToolResult);
-  registerCheckUrlIndexing5118Tool(registerTool, toToolResult);
+  registerGetLongtailKeywords5118Tool(registerTool);
+  registerGetIndustryFrequencyWords5118Tool(registerTool);
+  registerGetSuggestTerms5118Tool(registerTool);
+  registerGetKeywordMetrics5118Tool(registerTool);
+  registerGetMobileTrafficKeywords5118Tool(registerTool);
+  registerGetDomainRankKeywords5118Tool(registerTool);
+  registerGetBidKeywords5118Tool(registerTool);
+  registerGetPcSiteRankKeywords5118Tool(registerTool);
+  registerGetMobileSiteRankKeywords5118Tool(registerTool);
+  registerGetBidSites5118Tool(registerTool);
+  registerGetSiteWeight5118Tool(registerTool);
+  registerGetPcRankSnapshot5118Tool(registerTool);
+  registerGetMobileRankSnapshot5118Tool(registerTool);
+  registerGetPcTop50Sites5118Tool(registerTool);
+  registerGetMobileTop50Sites5118Tool(registerTool);
+  registerCheckUrlIndexing5118Tool(registerTool);
 
   assertToolCoverage();
 

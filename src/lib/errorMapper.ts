@@ -1,4 +1,12 @@
 const DEFAULT_MESSAGE = "Unknown upstream error.";
+const DEFAULT_INTERNAL_MESSAGE = "Internal tool execution error.";
+
+export const INTERNAL_ERROR_CODE = "INTERNAL_ERROR";
+export const INVALID_TOOL_OUTPUT_CODE = "INVALID_TOOL_OUTPUT";
+
+export interface InternalToolErrorDetails {
+  [key: string]: unknown;
+}
 
 export class ToolError extends Error {
   public readonly code: string;
@@ -83,5 +91,20 @@ export function map5118Error(
       return new ToolError("TASK_PENDING", message, true, details);
     default:
       return new ToolError("UPSTREAM_ERROR", message, retryable, details);
+  }
+}
+
+export function mapInternalToolError(
+  internalCode: string | undefined,
+  message: string | undefined,
+  details?: InternalToolErrorDetails,
+): ToolError {
+  const normalizedMessage = message?.trim() || DEFAULT_INTERNAL_MESSAGE;
+
+  switch (internalCode) {
+    case "TOOL_OUTPUT_SCHEMA_VALIDATION_FAILED":
+      return new ToolError(INVALID_TOOL_OUTPUT_CODE, normalizedMessage, false, details);
+    default:
+      return new ToolError(INTERNAL_ERROR_CODE, normalizedMessage, false, details);
   }
 }

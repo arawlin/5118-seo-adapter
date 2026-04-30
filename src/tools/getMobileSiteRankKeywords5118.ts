@@ -6,9 +6,8 @@ import {
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
-  validateToolOutputPayload,
+  createToolResult,
   type RegisterTool,
-  type ToToolResult,
 } from "./toolRegistration.js";
 import type { SiteRankKeywordsData } from "./siteRankKeywordsBase.js";
 
@@ -42,7 +41,6 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_RANK_KEYWORDS_
 
 export function registerGetMobileSiteRankKeywords5118Tool(
   registerTool: RegisterTool,
-  toToolResult: ToToolResult,
 ): void {
   registerTool(
     CONFIG.toolName,
@@ -54,7 +52,7 @@ export function registerGetMobileSiteRankKeywords5118Tool(
     },
     async (input) => {
       const payload = await getMobileSiteRankKeywords5118Handler(input);
-      return toToolResult(validateToolOutputPayload(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload));
+      return createToolResult(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload);
     },
   );
 }

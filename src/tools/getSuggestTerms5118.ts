@@ -8,9 +8,8 @@ import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
   STRING_OR_NULL_OUTPUT_SCHEMA,
-  validateToolOutputPayload,
+  createToolResult,
   type RegisterTool,
-  type ToToolResult,
 } from "./toolRegistration.js";
 import { asArray, asRecord, toStringOrNull } from "./normalizationUtils.js";
 
@@ -112,7 +111,6 @@ function normalizeSuggestTermsResponse(raw: unknown): SuggestTermsData {
 
 export function registerGetSuggestTerms5118Tool(
   registerTool: RegisterTool,
-  toToolResult: ToToolResult,
 ): void {
   registerTool(
     TOOL_NAME,
@@ -124,7 +122,7 @@ export function registerGetSuggestTerms5118Tool(
     },
     async (input) => {
       const payload = await getSuggestTerms5118Handler(input);
-      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+      return createToolResult(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload);
     },
   );
 }

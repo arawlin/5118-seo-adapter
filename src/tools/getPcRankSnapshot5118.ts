@@ -3,9 +3,8 @@ import { createRankSnapshotHandler, RANK_SNAPSHOT_DATA_OUTPUT_SCHEMA } from "./r
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
-  validateToolOutputPayload,
+  createToolResult,
   type RegisterTool,
-  type ToToolResult,
 } from "./toolRegistration.js";
 import type { RankSnapshotData } from "./rankSnapshotBase.js";
 
@@ -64,7 +63,6 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(RANK_SNAPSHOT_DATA_
 
 export function registerGetPcRankSnapshot5118Tool(
   registerTool: RegisterTool,
-  toToolResult: ToToolResult,
 ): void {
   registerTool(
     CONFIG.toolName,
@@ -76,7 +74,7 @@ export function registerGetPcRankSnapshot5118Tool(
     },
     async (input) => {
       const payload = await getPcRankSnapshot5118Handler(input);
-      return toToolResult(validateToolOutputPayload(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload));
+      return createToolResult(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload);
     },
   );
 }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getErrcode, map5118Error } from "../src/lib/errorMapper.js";
+import {
+  getErrcode,
+  INVALID_TOOL_OUTPUT_CODE,
+  map5118Error,
+  mapInternalToolError,
+} from "../src/lib/errorMapper.js";
 
 describe("errorMapper", () => {
   it("maps missing key errors", () => {
@@ -17,5 +22,17 @@ describe("errorMapper", () => {
   it("extracts errcode safely", () => {
     expect(getErrcode({ errcode: "0" })).toBe("0");
     expect(getErrcode({})).toBeUndefined();
+  });
+
+  it("maps output schema validation to internal tool error code", () => {
+    const error = mapInternalToolError(
+      "TOOL_OUTPUT_SCHEMA_VALIDATION_FAILED",
+      "validation failed",
+      { toolName: "get_bid_keywords_5118" },
+    );
+
+    expect(error.code).toBe(INVALID_TOOL_OUTPUT_CODE);
+    expect(error.retryable).toBe(false);
+    expect(error.details).toEqual({ toolName: "get_bid_keywords_5118" });
   });
 });

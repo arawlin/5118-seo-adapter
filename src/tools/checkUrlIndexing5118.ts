@@ -12,9 +12,8 @@ import {
   createResponseOutputSchema,
   NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
   STRING_OR_NULL_OUTPUT_SCHEMA,
-  validateToolOutputPayload,
+  createToolResult,
   type RegisterTool,
-  type ToToolResult,
 } from "./toolRegistration.js";
 import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
@@ -103,7 +102,6 @@ function normalizeUrlIndexingResponse(raw: unknown): UrlIndexingData {
 
 export function registerCheckUrlIndexing5118Tool(
   registerTool: RegisterTool,
-  toToolResult: ToToolResult,
 ): void {
   registerTool(
     TOOL_NAME,
@@ -115,7 +113,7 @@ export function registerCheckUrlIndexing5118Tool(
     },
     async (input) => {
       const payload = await checkUrlIndexing5118Handler(input);
-      return toToolResult(validateToolOutputPayload(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload));
+      return createToolResult(TOOL_NAME, TOOL_OUTPUT_SCHEMA, payload);
     },
   );
 }

@@ -6,9 +6,8 @@ import {
 import type { ResponseEnvelope } from "../types/toolContracts.js";
 import {
   createResponseOutputSchema,
-  validateToolOutputPayload,
+  createToolResult,
   type RegisterTool,
-  type ToToolResult,
 } from "./toolRegistration.js";
 import type { TopSiteSnapshotsData } from "./topSiteSnapshotBase.js";
 
@@ -62,7 +61,6 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(TOP_SITE_SNAPSHOTS_
 
 export function registerGetMobileTop50Sites5118Tool(
   registerTool: RegisterTool,
-  toToolResult: ToToolResult,
 ): void {
   registerTool(
     CONFIG.toolName,
@@ -74,7 +72,7 @@ export function registerGetMobileTop50Sites5118Tool(
     },
     async (input) => {
       const payload = await getMobileTop50Sites5118Handler(input);
-      return toToolResult(validateToolOutputPayload(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload));
+      return createToolResult(CONFIG.toolName, TOOL_OUTPUT_SCHEMA, payload);
     },
   );
 }
