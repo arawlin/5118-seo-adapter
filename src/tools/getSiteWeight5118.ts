@@ -17,16 +17,26 @@ export const GET_SITE_WEIGHT_5118_INPUT_SCHEMA = {
   url: z
     .string()
     .min(1)
-    .describe("Required domain or host to inspect for 5118 weight values."),
+    .describe(
+      "Required. Domain or host to look up (e.g. 'www.example.com'). Do not include protocol or path. The lookup returns weights across multiple search engines.",
+    ),
 } as const;
 
 export const SITE_WEIGHT_ITEM_OUTPUT_SCHEMA = z.object({
-  type: STRING_OR_NULL_OUTPUT_SCHEMA,
-  weight: STRING_OR_NULL_OUTPUT_SCHEMA,
+  type: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Search-engine label for the weight value. Known values: 'BaiduPCWeight' (Baidu PC), 'BaiduMobileWeight' (Baidu Mobile), 'SMWeight' (Shenma), 'TouTiaoWeight' (Toutiao). null only if 5118 returns an unrecognized shape.",
+  ),
+  weight: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "5118 weight tier as a string (typically '0'-'10'). String form because the upstream may surface non-numeric tiers; cast to number on the consumer side when needed.",
+  ),
 });
 
 export const SITE_WEIGHT_DATA_OUTPUT_SCHEMA = z.object({
-  weights: z.array(SITE_WEIGHT_ITEM_OUTPUT_SCHEMA),
+  weights: z
+    .array(SITE_WEIGHT_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "One entry per search engine that 5118 tracks. Empty when the domain is unknown to 5118.",
+    ),
 });
 
 export type SiteWeightItem = z.infer<typeof SITE_WEIGHT_ITEM_OUTPUT_SCHEMA>;
@@ -77,7 +87,14 @@ export function registerGetSiteWeight5118Tool(
     TOOL_NAME,
     {
       title: "Get Site Weight 5118",
-      description: "Sync site weight lookup via 5118 /weight.",
+      description:
+        [
+          "Look up a domain's 5118 weight tiers across Baidu PC, Baidu Mobile, Shenma, and Toutiao.",
+          "Use case: domain-authority audits, competitor benchmarking, and performance reporting; weight is 5118's proprietary 0-10-style score derived from Baidu/etc. ranking footprint.",
+          "Difference vs neighbors: get_domain_rank_keywords_5118 returns the underlying ranking-keyword list; this tool returns the aggregated tier only, with one row per search engine.",
+          "Most actionable output fields: data.weights[].type and .weight; consumers usually pivot the array into a flat object keyed by `type`.",
+          "Known limits: synchronous one-shot call; weight is a 5118 estimate (not Baidu's official metric); very new domains may return all '0' or empty arrays.",
+        ].join(" "),
       inputSchema: GET_SITE_WEIGHT_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

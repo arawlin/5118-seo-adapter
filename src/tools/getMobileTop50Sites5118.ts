@@ -16,32 +16,40 @@ export const GET_MOBILE_TOP50_SITES_5118_INPUT_SCHEMA = {
     .array(z.string().min(1))
     .max(50)
     .optional()
-    .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
+    .describe(
+      "Optional. Keywords to inspect (max 50 per task). Required for 'submit' and for 'wait' without a `taskId`. Each keyword's full top-N is returned independently.",
+    ),
   checkRow: z
     .number()
     .int()
     .positive()
     .max(100)
     .optional()
-    .describe("Optional maximum ranking depth to inspect. Maximum 100 for the mobile endpoint."),
+    .describe(
+      "Optional. Maximum SERP depth to capture per keyword. Range 1..100 (upstream cap). Upstream default is 50.",
+    ),
   executionMode: z
     .enum(["submit", "poll", "wait"])
     .optional()
-    .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
+    .describe(
+      "Optional. Async execution mode. Default 'wait'. 'submit'=create task and return taskId. 'poll'=fetch once. 'wait'=submit (or resume) and keep polling.",
+    ),
   taskId: z
     .union([z.string(), z.number()])
     .optional()
-    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+    .describe(
+      "Optional. Existing vendor task identifier. Required in 'poll'. In 'wait', supply it to resume polling without re-submitting.",
+    ),
   maxWaitSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional maximum client-side wait time in seconds for wait mode."),
+    .describe("Optional. Hard ceiling (seconds) on how long 'wait' polls before timing out."),
   pollIntervalSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
+    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 60."),
 } as const;
 
 export type GetMobileTop50Sites5118Input = z.infer<
@@ -66,7 +74,15 @@ export function registerGetMobileTop50Sites5118Tool(
     CONFIG.toolName,
     {
       title: "Get Mobile Top50 Sites 5118",
-      description: "Async mobile top-50 site snapshot via 5118 /keywordrank/baidumobile.",
+      description:
+        [
+          "Capture the full Baidu Mobile SERP top-N (up to 100 rows) for up to 50 keywords, including each ranking site's URL, mobile page title, page URL, top100 flag, and 5118 weight.",
+          "Use case: mobile SERP analysis and competitor discovery for queries where mobile traffic dominates.",
+          "Difference vs neighbors: get_mobile_rank_snapshot_5118 only returns ranks for a target domain; this tool returns every ranking site. get_pc_top50_sites_5118 is the PC counterpart.",
+          "Most actionable output fields: data.siteSnapshots[].keyword, .ranks[].siteUrl, .ranks[].rank, .ranks[].pageUrl, .ranks[].siteWeight; sort by rank asc to reconstruct the SERP.",
+          "Async contract: defaults to 'wait'. Tasks usually complete within seconds.",
+          "Known limits: keywords <= 50; checkRow <= 100; Baidu Mobile only; one crawler region per task; no historical SERP.",
+        ].join(" "),
       inputSchema: GET_MOBILE_TOP50_SITES_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

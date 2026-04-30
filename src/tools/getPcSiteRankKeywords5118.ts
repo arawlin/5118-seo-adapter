@@ -15,13 +15,17 @@ export const GET_PC_SITE_RANK_KEYWORDS_5118_INPUT_SCHEMA = {
   url: z
     .string()
     .min(1)
-    .describe("Required domain or host to inspect for PC site rank keywords."),
+    .describe(
+      "Required. Domain or host whose Baidu PC ranking keywords should be exported (e.g. 'www.example.com'). Do not include protocol or path. Subdomain aware.",
+    ),
   pageIndex: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Optional 1-based result page number. Defaults to 1."),
+    .describe(
+      "Optional. 1-based page number. Default 1. Page size is fixed by the upstream (typically 500 rows per page).",
+    ),
 } as const;
 
 export type GetPcSiteRankKeywords5118Input = z.infer<
@@ -46,7 +50,14 @@ export function registerGetPcSiteRankKeywords5118Tool(
     CONFIG.toolName,
     {
       title: "Get PC Site Rank Keywords 5118",
-      description: "Sync PC site rank keyword export via 5118 /keyword/pc/v2.",
+      description:
+        [
+          "Export the Baidu PC ranking-keyword list for a single host, including SERP rank, traffic indices, daily search volume, and SEM signals.",
+          "Use case: per-host content-gap analysis and competitor benchmarking when you need PC ranking data scoped to one site.",
+          "Difference vs neighbors: get_domain_rank_keywords_5118 aggregates across the entire domain (subdomains included); get_mobile_site_rank_keywords_5118 returns Baidu Mobile ranks for the same host. This tool is the PC-only, host-scoped version.",
+          "Most actionable output fields: data.items[].keyword, .rank, .pageUrl, .pcSearchVolume, .competition; iterate via pagination.",
+          "Known limits: synchronous one-shot call; PC SERP only; full export may span many pages; data is China-market focused.",
+        ].join(" "),
       inputSchema: GET_PC_SITE_RANK_KEYWORDS_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

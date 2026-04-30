@@ -25,42 +25,74 @@ export const GET_BID_SITES_5118_INPUT_SCHEMA = {
   keyword: z
     .string()
     .min(1)
-    .describe("Required bid keyword used to discover advertising domains and landing pages."),
+    .describe(
+      "Required. Bid keyword to inspect (the search term advertisers compete on). Plain text, no quotes.",
+    ),
   pageIndex: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Optional 1-based result page number. Defaults to 1."),
+    .describe("Optional. 1-based page number. Default 1. Must be >= 1."),
   pageSize: z
     .number()
     .int()
     .positive()
     .max(500)
     .optional()
-    .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
+    .describe(
+      "Optional. Rows per page. Default 20 (adapter), maximum 500 (upstream cap).",
+    ),
   includeHighlight: z
     .boolean()
     .optional()
-    .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
+    .describe(
+      "Optional. When true, the upstream returns HTML-highlighted ad copy in `title`/`intro`; when false (default), plain text. Set true only when rendering ad-copy diffs.",
+    ),
 } as const;
 
 export const BID_SITE_ITEM_OUTPUT_SCHEMA = z.object({
-  title: STRING_OR_NULL_OUTPUT_SCHEMA,
-  intro: STRING_OR_NULL_OUTPUT_SCHEMA,
-  siteTitle: STRING_OR_NULL_OUTPUT_SCHEMA,
-  siteUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
-  fullUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
-  companyName: STRING_OR_NULL_OUTPUT_SCHEMA,
-  baiduPcWeight: STRING_OR_NULL_OUTPUT_SCHEMA,
-  bidCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  lastSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA,
-  firstSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA,
+  title: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Ad creative title shown in Baidu PC for this advertiser. Plain text or highlighted HTML per `includeHighlight`.",
+  ),
+  intro: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Ad creative description/body. Plain text or highlighted HTML per `includeHighlight`.",
+  ),
+  siteTitle: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Display title of the advertiser's site (5118 field urltitle).",
+  ),
+  siteUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Advertiser's host (5118 field url) without protocol or path. Use this for grouping by domain.",
+  ),
+  fullUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Full landing-page URL the ad pointed to (with protocol and path).",
+  ),
+  companyName: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Registered company name associated with the ad, when 5118 has it.",
+  ),
+  baiduPcWeight: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Advertiser host's Baidu PC weight tier as a string (typically '0'-'10'); reflects organic authority for context.",
+  ),
+  bidCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of distinct keywords this advertiser bids on (across 5118's coverage).",
+  ),
+  lastSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Most recent date 5118 saw this advertiser bidding (5118 field join_date). Date string 'yyyy-MM-dd'.",
+  ),
+  firstSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "First date 5118 saw this advertiser bidding (5118 field firstfindtime). Date string 'yyyy-MM-dd'.",
+  ),
 });
 
 export const BID_SITES_DATA_OUTPUT_SCHEMA = z.object({
-  items: z.array(BID_SITE_ITEM_OUTPUT_SCHEMA),
-  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+  items: z
+    .array(BID_SITE_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "Advertiser rows for the queried keyword. Empty when no SEM activity has been observed.",
+    ),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable().describe(
+    "Pagination metadata for paging through the full advertiser set.",
+  ),
 });
 
 export type BidSiteItem = z.infer<typeof BID_SITE_ITEM_OUTPUT_SCHEMA>;
@@ -117,7 +149,14 @@ export function registerGetBidSites5118Tool(
     TOOL_NAME,
     {
       title: "Get Bid Sites 5118",
-      description: "Sync bid site mining via 5118 /bidsite.",
+      description:
+        [
+          "Discover which domains/advertisers run paid (SEM) ads on a given keyword, with their ad copy, landing-page URL, advertiser company, total keyword spread, and first/last seen dates.",
+          "Use case: competitor SEM intelligence; identify advertisers buying a target keyword and benchmark how long they have been active.",
+          "Difference vs neighbors: get_bid_keywords_5118 inverts the question (which keywords does *one domain* bid on); this tool returns advertisers per *keyword*. Compare with get_pc_top50_sites_5118 which returns *organic* SERP top sites.",
+          "Most actionable output fields: data.items[].siteUrl (advertiser host), .companyName, .fullUrl (landing page), .baiduPcWeight, .bidCount, .firstSeenAt / .lastSeenAt (campaign tenure).",
+          "Known limits: synchronous one-shot call; pageSize<=500; mainland-China Baidu SEM only; ad copy and landing pages may not reflect the live SERP.",
+        ].join(" "),
       inputSchema: GET_BID_SITES_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

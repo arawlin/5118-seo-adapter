@@ -21,17 +21,31 @@ import {
 const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 60;
 
 export const TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  searchEngine: STRING_OR_NULL_OUTPUT_SCHEMA,
-  ip: STRING_OR_NULL_OUTPUT_SCHEMA,
-  area: STRING_OR_NULL_OUTPUT_SCHEMA,
-  network: STRING_OR_NULL_OUTPUT_SCHEMA,
-  checkedAt: STRING_OR_NULL_OUTPUT_SCHEMA,
-  ranks: z.array(RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA),
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Keyword that this top-N snapshot was queried for."),
+  searchEngine: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Search engine identifier (e.g. 'baidupc', 'baidumobile').",
+  ),
+  ip: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Crawler IP used by 5118 for this snapshot."),
+  area: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Geographic region label for the crawler (e.g. '广东').",
+  ),
+  network: STRING_OR_NULL_OUTPUT_SCHEMA.describe("ISP/network label for the crawler (e.g. '电信')."),
+  checkedAt: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Upstream snapshot timestamp echoed verbatim, typically 'YYYY-MM-DD HH:mm:ss' in Asia/Shanghai. null when not provided.",
+  ),
+  ranks: z
+    .array(RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "Ordered SERP rows from rank 1 up to checkRow. Empty array when 5118 returned no rows.",
+    ),
 });
 
 export const TOP_SITE_SNAPSHOTS_DATA_OUTPUT_SCHEMA = z.object({
-  siteSnapshots: z.array(TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA),
+  siteSnapshots: z
+    .array(TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "One entry per submitted keyword. Empty while the vendor task is still pending or when 5118 returned no rows.",
+    ),
 });
 
 export type TopSiteSnapshotItem = z.infer<typeof TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA>;

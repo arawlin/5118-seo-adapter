@@ -23,55 +23,101 @@ export const GET_KEYWORD_METRICS_5118_INPUT_SCHEMA = {
     .array(z.string().min(1))
     .max(50)
     .optional()
-    .describe("Optional keyword list to submit to 5118. Required for submit mode, and also required for wait mode when taskId is not provided. Maximum 50 keywords per task."),
+    .describe(
+      "Optional. Up to 50 keywords to enrich. Required for `submit` and for `wait` when no `taskId` is supplied. Each keyword is sent as one row of the upstream batch; keep the list focused to avoid quota waste.",
+    ),
   executionMode: z
     .enum(["submit", "poll", "wait"])
     .optional()
-    .describe("Optional async execution mode. submit=create a vendor task and return taskId; poll=query an existing task by taskId; wait=submit or resume a task and keep polling until completion or timeout."),
+    .describe(
+      "Optional. Async execution mode. 'submit'=create a vendor task and return its taskId immediately (executionStatus='pending'). 'poll'=fetch a previously submitted taskId once. 'wait' (default)=submit (or resume from taskId) and keep polling until the task completes or the wait window elapses.",
+    ),
   taskId: z
     .union([z.string(), z.number()])
     .optional()
-    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling an already-created task."),
+    .describe(
+      "Optional. Existing vendor task identifier. Required in 'poll'. In 'wait', supply it to resume polling without re-submitting (saves quota).",
+    ),
   maxWaitSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional maximum client-side wait time in seconds for wait mode. The tool stops polling and returns the latest pending state when this limit is reached."),
+    .describe(
+      "Optional. Hard ceiling (seconds) on how long `wait` mode polls before returning a pending envelope. Defaults to the adapter's keyword-metrics ceiling. Ignored in 'submit'/'poll'.",
+    ),
   pollIntervalSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds when omitted."),
+    .describe(
+      "Optional. Interval (seconds) between poll attempts in 'wait' mode. Defaults to 60. Lower values consume quota faster.",
+    ),
 } as const;
 
 export const KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  cpc: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  recommendedBidMin: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  recommendedBidMax: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  ageBest: STRING_OR_NULL_OUTPUT_SCHEMA,
-  ageBestValue: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  sexMale: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  sexFemale: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  bidReason: STRING_OR_NULL_OUTPUT_SCHEMA,
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("The keyword this row reports on."),
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu PC traffic index (流量指数). Stable. null when 5118 has no value.",
+  ),
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Baidu Mobile search index."),
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "360 (Haosou) index. Often null because of partial coverage.",
+  ),
+  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Douyin search index."),
+  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Toutiao search index."),
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Google search index."),
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Kuaishou search index."),
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Weibo search index."),
+  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of long-tail variants 5118 has indexed for this keyword.",
+  ),
+  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of advertisers/bid companies seen on this keyword. Higher = stronger commercial intent.",
+  ),
+  cpc: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Reference SEM click price in CNY (5118 field bidword_price). null when not provided.",
+  ),
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "SEM competition level (bidword_kwc): 1=high, 2=medium, 3=low.",
+  ),
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily PC search volume (bidword_pcpv).",
+  ),
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily mobile search volume (bidword_wisepv).",
+  ),
+  recommendedBidMin: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Lower bound of the recommended SEM bid range (CNY).",
+  ),
+  recommendedBidMax: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Upper bound of the recommended SEM bid range (CNY).",
+  ),
+  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Recommended average SEM bid (CNY).",
+  ),
+  ageBest: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Top-converting age band reported by 5118 (e.g. '30-39'). String form because the upstream uses range labels.",
+  ),
+  ageBestValue: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Share (percentage value) of searches in the `ageBest` band, e.g. 60.22 for 60.22%.",
+  ),
+  sexMale: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Male audience share as a percentage value (0-100).",
+  ),
+  sexFemale: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Female audience share as a percentage value (0-100). sexMale + sexFemale should approximate 100.",
+  ),
+  bidReason: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Free-text label that 5118 attaches to the keyword's SEM/traffic rationale. Often empty.",
+  ),
 });
 
 export const KEYWORD_METRICS_DATA_OUTPUT_SCHEMA = z.object({
-  items: z.array(KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA),
+  items: z
+    .array(KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "One row per submitted keyword (in upstream order). Empty while the task is still pending; populated when executionStatus='completed'.",
+    ),
 });
 
 export type KeywordMetricsItem = z.infer<typeof KEYWORD_METRICS_ITEM_OUTPUT_SCHEMA>;
@@ -157,7 +203,14 @@ export function registerGetKeywordMetrics5118Tool(
     {
       title: "Get Keyword Metrics 5118",
       description:
-        "Async keyword metrics via 5118 /keywordparam/v2. Input fields: keywords<=50, executionMode submit|poll|wait, taskId, maxWaitSeconds, pollIntervalSeconds.",
+        [
+          "Enrich a known keyword list with SEO/SEM metrics: PC and mobile search index, daily search volume, SEM CPC and recommended bid, advertiser count, plus age/gender audience share.",
+          "Use case: keyword qualification and prioritization after a discovery step (longtail/suggest); produce a scored shortlist for content or SEM planning.",
+          "Difference vs neighbors: get_longtail_keywords_5118 *expands* a single seed into variants; this tool *enriches* a list you already have. get_mobile_traffic_keywords_5118 mines mobile-traffic words for a seed; this tool returns both PC and mobile metrics for an explicit list.",
+          "Most actionable output fields: data.items[].pcSearchVolume / .mobileSearchVolume / .index / .mobileIndex (demand), .competition / .bidCompanyCount / .recommendedBidAvg (commercial intent), .ageBest / .sexMale / .sexFemale (audience).",
+          "Async contract: 'submit' returns executionStatus='pending' with `taskId` only. 'poll' fetches once. 'wait' (default) polls until completion or `maxWaitSeconds`. taskId is reusable across modes.",
+          "Known limits: max 50 keywords per task; upstream completion typically takes seconds-to-minutes; some metrics (e.g. age/gender) are null for low-volume keywords; data is China-market focused.",
+        ].join(" "),
       inputSchema: GET_KEYWORD_METRICS_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

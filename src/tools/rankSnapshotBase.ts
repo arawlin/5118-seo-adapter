@@ -17,25 +17,49 @@ import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtil
 const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 60;
 
 export const RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA = z.object({
-  siteUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
-  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  pageTitle: STRING_OR_NULL_OUTPUT_SCHEMA,
-  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
-  top100: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  siteWeight: STRING_OR_NULL_OUTPUT_SCHEMA,
+  siteUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Host of the page that occupies this SERP slot (e.g. www.example.com). null when the upstream omitted it.",
+  ),
+  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "1-based SERP position for this row. 0 means the input domain did not appear in the inspected window (when the row reflects the queried domain). null when the upstream omitted the rank.",
+  ),
+  pageTitle: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Page title scraped by 5118 for this SERP result. null when missing upstream.",
+  ),
+  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Full landing URL of this SERP result. null when missing upstream.",
+  ),
+  top100: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Approximate count of keywords for which this site appears in the top-100 SERP, sourced from 5118. Useful as a domain-strength proxy.",
+  ),
+  siteWeight: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "5118 weight tier for the site, kept as a string because upstream returns mixed numeric/letter codes.",
+  ),
 });
 
 export const RANK_SNAPSHOT_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  searchEngine: STRING_OR_NULL_OUTPUT_SCHEMA,
-  ip: STRING_OR_NULL_OUTPUT_SCHEMA,
-  area: STRING_OR_NULL_OUTPUT_SCHEMA,
-  network: STRING_OR_NULL_OUTPUT_SCHEMA,
-  ranks: z.array(RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA),
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Keyword that this snapshot was queried for."),
+  searchEngine: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Search engine identifier. Typical values: 'baidupc', 'baidumobile'.",
+  ),
+  ip: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Crawler IP used by 5118 to fetch this SERP."),
+  area: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Geographic region label for the crawler (e.g. '广东'). Influences localized SERPs.",
+  ),
+  network: STRING_OR_NULL_OUTPUT_SCHEMA.describe("ISP/network label for the crawler (e.g. '电信')."),
+  ranks: z
+    .array(RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "SERP rows for this keyword. Empty array means 5118 returned no rows; the queried domain is missing whenever no row has a matching siteUrl.",
+    ),
 });
 
 export const RANK_SNAPSHOT_DATA_OUTPUT_SCHEMA = z.object({
-  rankings: z.array(RANK_SNAPSHOT_KEYWORD_ITEM_OUTPUT_SCHEMA),
+  rankings: z
+    .array(RANK_SNAPSHOT_KEYWORD_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "One entry per submitted keyword. Empty when the task is still pending or the upstream returned no rows.",
+    ),
 });
 
 export type RankSnapshotResultItem = z.infer<typeof RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA>;

@@ -20,50 +20,84 @@ export const GET_BID_KEYWORDS_5118_INPUT_SCHEMA = {
   url: z
     .string()
     .min(1)
-    .describe("Required domain or host to inspect for bid keywords."),
+    .describe(
+      "Required. Domain or host whose paid (SEM) keywords should be mined (e.g. 'www.example.com'). Do not include protocol or path.",
+    ),
   pageIndex: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Optional 1-based result page number. Defaults to 1."),
+    .describe("Optional. 1-based page number. Default 1. Must be >= 1."),
   pageSize: z
     .number()
     .int()
     .positive()
     .max(500)
     .optional()
-    .describe("Optional number of rows per page. Maximum 500. Defaults to 20 for adapter responses."),
+    .describe(
+      "Optional. Rows per page. Default 20 (adapter), maximum 500 (upstream cap).",
+    ),
   includeHighlight: z
     .boolean()
     .optional()
-    .describe("Optional upstream highlight toggle. true requests highlighted HTML from 5118; false keeps the upstream request plain."),
+    .describe(
+      "Optional. When true, the upstream returns HTML-highlighted ad copy in `title`/`intro`; when false (default), plain text is returned. Set true only when rendering ad-copy diffs.",
+    ),
 } as const;
 
 export const BID_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  title: STRING_OR_NULL_OUTPUT_SCHEMA,
-  intro: STRING_OR_NULL_OUTPUT_SCHEMA,
-  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA,
-  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  recentBidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  totalBidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  firstSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA,
-  lastSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA,
-  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("The bid keyword the domain advertises on."),
+  title: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Ad creative title captured by 5118. Plain text by default; HTML-highlighted when `includeHighlight=true`.",
+  ),
+  intro: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Ad creative description/body. Plain text or highlighted HTML per `includeHighlight`.",
+  ),
+  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Reference SEM click price for the keyword (5118 field bidword_semprice). String because the upstream sometimes returns formatted ranges.",
+  ),
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily PC search volume for the keyword (bidword_pcpv).",
+  ),
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily mobile search volume for the keyword (bidword_wisepv).",
+  ),
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "SEM competition level (bidword_kwc): 1=high, 2=medium, 3=low.",
+  ),
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Baidu PC traffic index."),
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Baidu Mobile search index."),
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("360 (Haosou) search index."),
+  recentBidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of distinct advertisers seen on this keyword within the last 30 days (urlcount_30day).",
+  ),
+  totalBidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Total advertisers seen on this keyword over 5118's full lookback (urlcount).",
+  ),
+  firstSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "First time 5118 saw the domain bidding on this keyword. Date string 'yyyy-MM-dd'.",
+  ),
+  lastSeenAt: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Most recent time 5118 saw the bid (5118 field joindate). Date string 'yyyy-MM-dd'.",
+  ),
+  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Recommended average SEM bid (CNY).",
+  ),
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Google search index."),
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Kuaishou search index."),
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Weibo search index."),
 });
 
 export const BID_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
-  items: z.array(BID_KEYWORD_ITEM_OUTPUT_SCHEMA),
-  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+  items: z
+    .array(BID_KEYWORD_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "Bid-keyword rows for the queried domain. Empty for domains that 5118 has not observed bidding.",
+    ),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable().describe(
+    "Pagination metadata for paging through the full bid-keyword set.",
+  ),
 });
 
 export type BidKeywordItem = z.infer<typeof BID_KEYWORD_ITEM_OUTPUT_SCHEMA>;
@@ -132,7 +166,14 @@ export function registerGetBidKeywords5118Tool(
     TOOL_NAME,
     {
       title: "Get Bid Keywords 5118",
-      description: "Sync bid keyword mining via 5118 /bidword/v2.",
+      description:
+        [
+          "Mine a domain's paid (SEM) keywords with ad creative copy, click price, daily search volume, and 30-day vs all-time advertiser counts.",
+          "Use case: competitor SEM intelligence and content-gap research; spot what a domain pays to acquire and how aggressively (recent vs total advertiser counts).",
+          "Difference vs neighbors: get_domain_rank_keywords_5118 returns the domain's organic Baidu PC ranks (no SEM data); get_bid_sites_5118 inverts the question (which sites bid on a *keyword*); this tool covers paid keywords for one *domain*.",
+          "Most actionable output fields: data.items[].keyword, .semPrice / .recommendedBidAvg (cost), .pcSearchVolume / .mobileSearchVolume (demand), .recentBidCompanyCount vs .totalBidCompanyCount (commercial intensity trend), .firstSeenAt / .lastSeenAt (campaign freshness).",
+          "Known limits: synchronous one-shot call; pageSize<=500; coverage is mainland-China SEM only; ad copy may be stale relative to the live SERP.",
+        ].join(" "),
       inputSchema: GET_BID_KEYWORDS_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

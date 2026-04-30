@@ -20,62 +20,108 @@ export const GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA = {
   keyword: z
     .string()
     .min(1)
-    .describe("Required seed keyword. This is the root term that 5118 expands into long-tail keywords."),
+    .describe(
+      "Required. Seed keyword (Chinese or English) that 5118 will expand into long-tail variants. Pass exactly the user-facing term; do not concatenate or pre-encode it.",
+    ),
   pageIndex: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Optional 1-based result page number. Use it to read a later page of normalized keywords. Defaults to 1."),
+    .describe(
+      "Optional. 1-based page number for paging through the full long-tail set. Default 1. Must be >= 1.",
+    ),
   pageSize: z
     .number()
     .int()
     .positive()
     .max(100)
     .optional()
-    .describe("Optional number of rows per page. Maximum 100. Larger values return more keywords per request."),
+    .describe(
+      "Optional. Rows per page. Default 20 (adapter default), maximum 100 (upstream cap). Values above 100 are rejected before the call.",
+    ),
   sortField: z
     .string()
     .optional()
-    .describe("Optional vendor sort selector. Common values: 2=bidCompanyCount advertiser count, 3=longKeywordCount long-tail count, 4=index PC search index, 5=mobileIndex mobile search index."),
+    .describe(
+      "Optional. Upstream sort selector (vendor numeric code passed through as-is). Common values: 2=bid company count, 3=long-tail count, 4=PC traffic index (default upstream sort), 5=mobile index, 6=360 index, 7=PC daily volume, 8=mobile daily volume, 9=competition level.",
+    ),
   sortType: z
     .enum(["asc", "desc"])
     .optional()
-    .describe("Optional sort direction for sortField. asc=low to high, desc=high to low."),
+    .describe(
+      "Optional. Sort direction for `sortField`. 'asc'=low-to-high, 'desc'=high-to-low. Upstream default is 'desc'. Only meaningful when `sortField` is set.",
+    ),
   filter: z
     .string()
     .optional()
-    .describe("Optional vendor quick filter selector. Common values: 1=all results, 2=traffic words, 9=keywords with bidding ads."),
+    .describe(
+      "Optional. Quick-filter selector (vendor numeric code). 1=all (upstream default), 2=traffic words, 3=PC index words, 4=mobile index words, 5=360 index words, 6=traffic-feature words, 7=PC volume words, 8=mobile volume words, 9=words with active bid advertisers.",
+    ),
   filterDate: z
     .string()
     .optional()
-    .describe("Optional vendor filter date in yyyy-MM-dd format. Use it when you need a specific date snapshot supported by 5118."),
+    .describe(
+      "Optional. Snapshot date in 'yyyy-MM-dd'. Use only when 5118 supports a historical snapshot for the term. Omit for the latest data.",
+    ),
 } as const;
 
 export const LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
-  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  semReason: STRING_OR_NULL_OUTPUT_SCHEMA,
-  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA,
-  semRecommendPriceAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("The expanded long-tail keyword."),
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu PC traffic index (流量指数). Stable. null means 5118 has no value; 0 means upstream-reported zero.",
+  ),
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu Mobile search index. Stable.",
+  ),
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "360 (Haosou) search index. Often null because the upstream coverage is partial.",
+  ),
+  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Douyin search index."),
+  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Toutiao search index."),
+  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of further long-tail variants 5118 has indexed for this term.",
+  ),
+  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of advertisers/bid companies seen for the term. Indicates SEM commercial intent.",
+  ),
+  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Recommended representative landing page from 5118. Often null/empty.",
+  ),
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "SEM competition level (bidword_kwc): 1=high, 2=medium, 3=low. null when 5118 omits it.",
+  ),
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily PC search volume (bidword_pcpv).",
+  ),
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily mobile search volume (bidword_wisepv).",
+  ),
+  semReason: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Free-text label that 5118 attaches to traffic features (e.g. 高商业价值). Often empty.",
+  ),
+  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Reference SEM click-price range in CNY (e.g. '0.35~4.57'). Kept as string because the upstream returns a range.",
+  ),
+  semRecommendPriceAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Recommended average SEM bid (CNY) for this term.",
+  ),
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Google search index (mainland-China-skewed estimate).",
+  ),
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Kuaishou search index."),
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Weibo search index."),
 });
 
 export const LONGTAIL_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
-  keywords: z.array(LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA),
-  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+  keywords: z
+    .array(LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "Long-tail keyword rows for the current page, sorted per `sortField`/`sortType`. Empty array when 5118 returns no rows.",
+    ),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable().describe(
+    "Pagination metadata echoed from the upstream. Use it to drive subsequent pageIndex calls.",
+  ),
 });
 
 export type LongtailKeywordItem = z.infer<typeof LONGTAIL_KEYWORD_ITEM_OUTPUT_SCHEMA>;
@@ -151,7 +197,13 @@ export function registerGetLongtailKeywords5118Tool(
     {
       title: "Get Longtail Keywords 5118",
       description:
-        "Sync long-tail keyword mining via 5118 /keyword/word/v2. Input fields: keyword, pageIndex, pageSize<=100, sortField, sortType, filter, filterDate.",
+        [
+          "Mine long-tail keyword variants for a seed term, with PC/mobile indices, daily search volume, SEM competition, and recommended bid price.",
+          "Use case: keyword research and content-gap analysis when you start from a single seed term and need a paginated list of expansions ranked by traffic or SEM intent.",
+          "Difference vs neighbors: get_suggest_terms_5118 returns SERP autocomplete hints (no metrics); get_keyword_metrics_5118 enriches a known keyword list (no expansion); get_industry_frequency_words_5118 returns co-occurring industry terms (no metrics).",
+          "Most actionable output fields: data.keywords[].keyword, .index, .mobileIndex, .pcSearchVolume, .mobileSearchVolume, .competition, .semRecommendPriceAvg, plus pagination for paging.",
+          "Known limits: synchronous one-shot call; pageSize <= 100; results may be empty for very narrow seeds; many index fields may be null when 5118 has no coverage; data is China-market focused.",
+        ].join(" "),
       inputSchema: GET_LONGTAIL_KEYWORDS_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

@@ -22,40 +22,66 @@ export const CHECK_URL_INDEXING_5118_INPUT_SCHEMA = {
     .array(z.string().min(1))
     .max(200)
     .optional()
-    .describe("Optional URL list to submit for indexing checks. Required unless taskId is used to resume polling. Maximum 200 URLs per task."),
+    .describe(
+      "Optional. Up to 200 fully-qualified URLs (with protocol) to check for Baidu PC indexing. Required for 'submit' and for 'wait' without a `taskId`. Mix of pages from one or several domains is allowed.",
+    ),
   executionMode: z
     .enum(["submit", "poll", "wait"])
     .optional()
-    .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
+    .describe(
+      "Optional. Async execution mode. Default 'wait'. 'submit'=create the task and return its taskId. 'poll'=fetch a previously submitted task once. 'wait'=submit (or resume) and keep polling.",
+    ),
   taskId: z
     .union([z.string(), z.number()])
     .optional()
-    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+    .describe(
+      "Optional. Existing vendor task identifier. Required in 'poll'. In 'wait', supply it to resume polling without re-submitting.",
+    ),
   maxWaitSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional maximum client-side wait time in seconds for wait mode."),
+    .describe(
+      "Optional. Hard ceiling (seconds) on how long 'wait' polls before returning a pending envelope.",
+    ),
   pollIntervalSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
+    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 60."),
 } as const;
 
 export const URL_INDEXING_ITEM_OUTPUT_SCHEMA = z.object({
-  url: STRING_OR_NULL_OUTPUT_SCHEMA,
-  status: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  title: STRING_OR_NULL_OUTPUT_SCHEMA,
-  snapshotTime: STRING_OR_NULL_OUTPUT_SCHEMA,
+  url: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Echoed URL that was checked."),
+  status: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Indexing status code: 0 = not indexed, 1 = indexed by Baidu PC, 2 = check failed (e.g. URL unreachable). null only when the upstream omits it.",
+  ),
+  title: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Title captured by Baidu's index for this URL. null when the page is not indexed or 5118 has no value.",
+  ),
+  snapshotTime: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu cache snapshot timestamp echoed verbatim (typically 'YYYY-MM-DD' or 'YYYY-MM-DD HH:mm:ss', Asia/Shanghai). null when not provided or page not indexed.",
+  ),
 });
 
 export const URL_INDEXING_DATA_OUTPUT_SCHEMA = z.object({
-  items: z.array(URL_INDEXING_ITEM_OUTPUT_SCHEMA),
-  total: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  checkStatus: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  submitTime: STRING_OR_NULL_OUTPUT_SCHEMA,
-  finishedTime: STRING_OR_NULL_OUTPUT_SCHEMA,
+  items: z
+    .array(URL_INDEXING_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "One row per submitted URL. Empty while the vendor task is pending; populated after `checkStatus`=1.",
+    ),
+  total: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Total number of URLs in the task as reported by the upstream. Used to verify completeness against `urls.length`.",
+  ),
+  checkStatus: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Vendor task status: 0 = still checking, 1 = finished. Mirrors the envelope `executionStatus` ('pending' vs 'completed').",
+  ),
+  submitTime: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Timestamp the upstream task was submitted (Asia/Shanghai). Useful for SLA tracking.",
+  ),
+  finishedTime: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Timestamp the upstream task finished (Asia/Shanghai). null while pending.",
+  ),
 });
 
 export type UrlIndexingItem = z.infer<typeof URL_INDEXING_ITEM_OUTPUT_SCHEMA>;
@@ -107,7 +133,15 @@ export function registerCheckUrlIndexing5118Tool(
     TOOL_NAME,
     {
       title: "Check URL Indexing 5118",
-      description: "Async URL indexing check via 5118 /include.",
+      description:
+        [
+          "Check whether each submitted URL is currently indexed by Baidu PC, including its captured title and cache snapshot time.",
+          "Use case: technical SEO audits and alerting on de-indexed pages; submit a sitemap-derived URL list to detect coverage gaps.",
+          "Difference vs neighbors: get_site_weight_5118 returns aggregate domain authority but no per-URL coverage; get_pc_rank_snapshot_5118 only checks rank, not whether the URL is indexed at all.",
+          "Most actionable output fields: data.items[].url, .status (0=not indexed, 1=indexed, 2=failed), .title, .snapshotTime; data.total to verify completeness; data.checkStatus to confirm task finished.",
+          "Async contract: defaults to 'wait'. Tasks usually complete within minutes.",
+          "Known limits: max 200 URLs per task; Baidu PC only (mobile and other engines not covered); status=2 (failed) does not distinguish 4xx vs 5xx vs DNS failures; submit URLs as fully-qualified including protocol.",
+        ].join(" "),
       inputSchema: CHECK_URL_INDEXING_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

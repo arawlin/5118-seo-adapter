@@ -13,37 +13,47 @@ export const GET_MOBILE_RANK_SNAPSHOT_5118_INPUT_SCHEMA = {
     .string()
     .min(1)
     .optional()
-    .describe("Optional target domain for submit or wait mode. Required unless taskId is used to resume polling."),
+    .describe(
+      "Optional. Target domain or host to check ranks for (e.g. 'm.example.com'). Required for 'submit' and for 'wait' without a `taskId`. Do not include protocol or path.",
+    ),
   keywords: z
     .array(z.string().min(1))
     .max(50)
     .optional()
-    .describe("Optional keyword list for submit or wait mode. Required unless taskId is used to resume polling. Maximum 50 keywords per task."),
+    .describe(
+      "Optional. Keywords to check (max 50 per task). Required for 'submit' and for 'wait' without a `taskId`. Each keyword is queried against Baidu Mobile.",
+    ),
   checkRow: z
     .number()
     .int()
     .positive()
     .max(100)
     .optional()
-    .describe("Optional maximum ranking depth to inspect. Maximum 100 for the mobile endpoint."),
+    .describe(
+      "Optional. Maximum SERP depth to inspect per keyword. Range 1..100 (mobile endpoint allows deeper inspection than PC). Upstream default is 50.",
+    ),
   executionMode: z
     .enum(["submit", "poll", "wait"])
     .optional()
-    .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout."),
+    .describe(
+      "Optional. Async execution mode. Default 'wait'. 'submit'=create task and return taskId. 'poll'=fetch once. 'wait'=submit (or resume) and keep polling.",
+    ),
   taskId: z
     .union([z.string(), z.number()])
     .optional()
-    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+    .describe(
+      "Optional. Existing vendor task identifier. Required in 'poll'. In 'wait', supply it to resume polling without re-submitting.",
+    ),
   maxWaitSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional maximum client-side wait time in seconds for wait mode."),
+    .describe("Optional. Hard ceiling (seconds) on how long 'wait' polls before timing out."),
   pollIntervalSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional polling interval in seconds for wait mode. Defaults to 60 seconds."),
+    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 60."),
 } as const;
 
 export type GetMobileRankSnapshot5118Input = z.infer<
@@ -68,7 +78,15 @@ export function registerGetMobileRankSnapshot5118Tool(
     CONFIG.toolName,
     {
       title: "Get Mobile Rank Snapshot 5118",
-      description: "Async mobile rank snapshot via 5118 /morerank/baidumobile.",
+      description:
+        [
+          "Real-time Baidu Mobile SERP rank check for a target domain across up to 50 keywords. Returns each keyword's top-N rows so you can find the queried domain's mobile rank position.",
+          "Use case: mobile rank tracking and alerting; complements the PC snapshot for sites where mobile traffic dominates.",
+          "Difference vs neighbors: get_pc_rank_snapshot_5118 is the PC counterpart (max checkRow=50 there vs 100 here); get_mobile_top50_sites_5118 returns the full top-N for a keyword without filtering by domain.",
+          "Most actionable output fields: data.rankings[].ranks[] filtered by `siteUrl`. rank=0 means the domain did not appear within `checkRow`.",
+          "Async contract: defaults to 'wait'. Vendor task typically completes within seconds.",
+          "Known limits: keywords <= 50; checkRow <= 100; Baidu Mobile only; one crawler region per task; no historical data.",
+        ].join(" "),
       inputSchema: GET_MOBILE_RANK_SNAPSHOT_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },

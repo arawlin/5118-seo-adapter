@@ -25,31 +25,65 @@ export interface SiteRankKeywordsInput {
 }
 
 export const SITE_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  pageTitle: STRING_OR_NULL_OUTPUT_SCHEMA,
-  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA,
-  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  semReason: STRING_OR_NULL_OUTPUT_SCHEMA,
-  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA,
-  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA,
-  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Keyword that the inspected site ranks for."),
+  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "1-based SERP position of the inspected site for this keyword. null when the upstream omitted it.",
+  ),
+  pageTitle: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Page title of the ranking page captured by 5118.",
+  ),
+  pageUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Landing URL of the ranking page captured by 5118.",
+  ),
+  bidCompanyCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Total advertiser/bid company count for this keyword. Indicates SEM commercial intent.",
+  ),
+  longKeywordCount: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Number of long-tail keywords related to this seed term according to 5118.",
+  ),
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu PC traffic index (流量指数). Higher means heavier search demand on Baidu PC.",
+  ),
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu Mobile traffic index. Higher means heavier mobile search demand.",
+  ),
+  haosouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "360/Haosou search index. null when 5118 has no value for the term.",
+  ),
+  douyinIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Douyin search index."),
+  toutiaoIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Toutiao search index."),
+  competition: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "SEM competition level (bidword_kwc): 1=high, 2=medium, 3=low. null when 5118 omits it.",
+  ),
+  pcSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily PC search volume for the keyword (bidword_pcpv).",
+  ),
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily mobile search volume for the keyword (bidword_wisepv).",
+  ),
+  semReason: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "5118 traffic-feature label explaining why the keyword carries SEM value. null when not provided.",
+  ),
+  semPrice: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Reference SEM click-price range from 5118 (e.g. '0.35~4.57'). String because the upstream returns a range.",
+  ),
+  recommendedBidAvg: NUMBER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Recommended average SEM bid in CNY (bidword_recommend_price_avg).",
+  ),
+  googleIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Google search index."),
+  kuaishouIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Kuaishou search index."),
+  weiboIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe("Weibo search index."),
 });
 
 export const SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
-  items: z.array(SITE_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA),
-  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+  items: z
+    .array(SITE_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "Ranking-keyword rows for the queried site, sorted by upstream default. Empty when no rows were returned.",
+    ),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable().describe(
+    "Pagination object for paging through the full export. Null only when the upstream omitted pagination metadata.",
+  ),
 });
 
 export type SiteRankKeywordItem = z.infer<typeof SITE_RANK_KEYWORD_ITEM_OUTPUT_SCHEMA>;

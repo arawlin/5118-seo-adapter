@@ -25,53 +25,87 @@ export const GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA = {
     .string()
     .min(1)
     .optional()
-    .describe("Optional seed keyword to mine. Required for submit mode, and also required for poll mode because the upstream 5118 poll request still expects the original keyword."),
+    .describe(
+      "Optional. Seed keyword to mine mobile traffic words for. Required for 'submit' and for 'wait' without a `taskId`. Also required for 'poll' because the upstream poll request must echo the original keyword.",
+    ),
   pageIndex: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Optional 1-based page number for completed traffic keyword results. Defaults to 1."),
+    .describe(
+      "Optional. 1-based page number applied at result-fetch time. Default 1. Must be >= 1.",
+    ),
   pageSize: z
     .number()
     .int()
     .positive()
     .max(500)
     .optional()
-    .describe("Optional completed result page size. Maximum 500. Defaults to 20."),
+    .describe(
+      "Optional. Rows per page. Default 20, maximum 500 (upstream cap).",
+    ),
   executionMode: z
     .enum(["submit", "poll", "wait"])
     .optional()
-    .describe("Optional async execution mode. submit=create a vendor task; poll=check an existing task; wait=submit or resume and keep polling until completion or timeout. Defaults to submit for this long-running API."),
+    .describe(
+      "Optional. Async execution mode. Default 'submit' for this long-running upstream API. 'submit'=create the task and return its taskId. 'poll'=fetch a previously submitted task once. 'wait'=submit (or resume) and keep polling.",
+    ),
   taskId: z
     .union([z.string(), z.number()])
     .optional()
-    .describe("Optional existing vendor task identifier. Required in poll mode, and can also be used in wait mode to resume polling."),
+    .describe(
+      "Optional. Existing vendor task identifier. Required in 'poll'. In 'wait', supply it together with `keyword` to resume polling.",
+    ),
   maxWaitSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional maximum client-side wait time in seconds for wait mode before timeout. The tool returns the latest pending state if the limit is reached first."),
+    .describe(
+      "Optional. Hard ceiling (seconds) on how long 'wait' polls before returning a pending envelope. Defaults to the adapter traffic-mining ceiling. Upstream tasks typically complete in 1-10 minutes.",
+    ),
   pollIntervalSeconds: z
     .number()
     .positive()
     .optional()
-    .describe("Optional polling interval in seconds for wait mode. Defaults to the shared async poll interval when omitted."),
+    .describe(
+      "Optional. Interval (seconds) between poll attempts in 'wait' mode. Defaults to the shared async poll interval.",
+    ),
 } as const;
 
 export const MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
-  keyword: STRING_OR_NULL_OUTPUT_SCHEMA,
-  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  url: STRING_OR_NULL_OUTPUT_SCHEMA,
-  weight: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
-  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA,
+  keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Mined mobile traffic word (5118 field `word`).",
+  ),
+  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Generic traffic index echoed by the upstream when present. Often null on this endpoint; prefer `mobileIndex` and `mobileSearchVolume`.",
+  ),
+  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Position of the term inside the mined list. Stable order across pages; not a SERP rank.",
+  ),
+  url: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Representative URL associated by 5118 with this term, if any.",
+  ),
+  weight: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Mining-weight score from 5118 (价值量). Higher values are more strategic for mobile traffic.",
+  ),
+  mobileIndex: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Baidu Mobile search index (5118 field `mobile_index`).",
+  ),
+  mobileSearchVolume: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
+    "Daily mobile search volume (5118 field `bidword_wisepv`). Most actionable demand signal on this endpoint.",
+  ),
 });
 
 export const MOBILE_TRAFFIC_KEYWORDS_DATA_OUTPUT_SCHEMA = z.object({
-  keywords: z.array(MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA),
-  pagination: PAGINATION_OUTPUT_SCHEMA.nullable(),
+  keywords: z
+    .array(MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA)
+    .describe(
+      "Mined mobile traffic words for the current page. Empty while the vendor task is pending; populated after completion.",
+    ),
+  pagination: PAGINATION_OUTPUT_SCHEMA.nullable().describe(
+    "Pagination metadata for paging through the full mined set. Null only when omitted by the upstream.",
+  ),
 });
 
 export type MobileTrafficKeywordItem = z.infer<typeof MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA>;
@@ -127,7 +161,15 @@ export function registerGetMobileTrafficKeywords5118Tool(
     TOOL_NAME,
     {
       title: "Get Mobile Traffic Keywords 5118",
-      description: "Async mobile traffic keyword mining via 5118 /traffic.",
+      description:
+        [
+          "Mine mobile-search traffic words for a seed keyword, returning each word with its mobile index, daily mobile volume, and 5118 weight score.",
+          "Use case: mobile-first keyword research and rank tracking; identify long-tail terms that drive mobile traffic before pulling rank snapshots.",
+          "Difference vs neighbors: get_longtail_keywords_5118 returns full PC+mobile metrics for one seed in a single sync call; this tool is mobile-only, runs as an async vendor task, and surfaces a 5118-curated 'value' weight not available elsewhere.",
+          "Most actionable output fields: data.keywords[].keyword, .mobileSearchVolume, .mobileIndex, .weight; pagination drives subsequent pages.",
+          "Async contract: defaults to 'submit' (returns taskId immediately, executionStatus='pending'). Re-call with executionMode='poll' or 'wait' plus the same `keyword` and the returned `taskId` to fetch results.",
+          "Known limits: long-running upstream task (1-10 min typical); pageSize<=500; mainland-China mobile coverage; results may be empty for English or very narrow seeds.",
+        ].join(" "),
       inputSchema: GET_MOBILE_TRAFFIC_KEYWORDS_5118_INPUT_SCHEMA,
       outputSchema: TOOL_OUTPUT_SCHEMA,
     },
