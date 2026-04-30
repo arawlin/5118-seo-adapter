@@ -14,7 +14,7 @@ import {
 } from "./toolRegistration.js";
 import { asArray, asRecord, toNumber, toStringOrNull } from "./normalizationUtils.js";
 
-const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 10;
+const DEFAULT_RANK_SNAPSHOT_POLL_INTERVAL_SECONDS = 60;
 
 export const RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA = z.object({
   siteUrl: STRING_OR_NULL_OUTPUT_SCHEMA.describe(

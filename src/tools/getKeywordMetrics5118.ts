@@ -50,7 +50,7 @@ export const GET_KEYWORD_METRICS_5118_INPUT_SCHEMA = {
     .positive()
     .optional()
     .describe(
-      "Optional. Interval (seconds) between poll attempts in 'wait' mode. Defaults to 10. Lower values consume quota faster.",
+      "Optional. Interval (seconds) between poll attempts in 'wait' mode. Defaults to 60. Lower values consume quota faster.",
     ),
 } as const;
 
@@ -133,7 +133,7 @@ export type GetKeywordMetricsInput = GetKeywordMetrics5118Input;
 const TOOL_NAME = "get_keyword_metrics_5118";
 const API_NAME = "Keyword Search Volume Info API v2";
 const ENDPOINT = "/keywordparam/v2";
-const DEFAULT_KEYWORD_METRICS_POLL_INTERVAL_SECONDS = 10;
+const DEFAULT_KEYWORD_METRICS_POLL_INTERVAL_SECONDS = 60;
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(KEYWORD_METRICS_DATA_OUTPUT_SCHEMA);
 

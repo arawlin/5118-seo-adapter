@@ -18,7 +18,7 @@ import {
   toStringOrNull,
 } from "./normalizationUtils.js";
 
-const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 10;
+const DEFAULT_TOP_SITE_POLL_INTERVAL_SECONDS = 60;
 
 export const TOP_SITE_SNAPSHOT_ITEM_OUTPUT_SCHEMA = z.object({
   keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe("Keyword that this top-N snapshot was queried for."),

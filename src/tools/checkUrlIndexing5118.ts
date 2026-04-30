@@ -48,7 +48,7 @@ export const CHECK_URL_INDEXING_5118_INPUT_SCHEMA = {
     .number()
     .positive()
     .optional()
-    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 10."),
+    .describe("Optional. Interval (seconds) between poll attempts. Defaults to 60."),
 } as const;
 
 export const URL_INDEXING_ITEM_OUTPUT_SCHEMA = z.object({
@@ -97,7 +97,7 @@ export type CheckUrlIndexingInput = CheckUrlIndexing5118Input;
 const TOOL_NAME = "check_url_indexing_5118";
 const API_NAME = "PC URL Indexing API";
 const ENDPOINT = "/include";
-const DEFAULT_INDEXING_POLL_INTERVAL_SECONDS = 10;
+const DEFAULT_INDEXING_POLL_INTERVAL_SECONDS = 60;
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(URL_INDEXING_DATA_OUTPUT_SCHEMA);
 

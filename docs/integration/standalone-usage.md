@@ -448,7 +448,7 @@ also exported by the same module for compatibility.
 | `executionMode` | `submit` or `poll` or `wait` | no | Async mode. `submit` creates the task, `poll` checks a task, `wait` manages polling internally. |
 | `taskId` | string or number | required in poll | Existing async task identifier. |
 | `maxWaitSeconds` | number | no | Maximum wait time in `wait` mode. |
-| `pollIntervalSeconds` | number | no | Polling interval in `wait` mode. The tool defaults to `10` seconds. |
+| `pollIntervalSeconds` | number | no | Polling interval in `wait` mode. The tool defaults to `60` seconds. |
 
 ### Keyword Metrics Minimal Request Examples
 

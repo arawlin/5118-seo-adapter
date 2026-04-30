@@ -437,7 +437,7 @@ import type {
 | `executionMode` | `submit`、`poll`、`wait` | 否 | 异步模式。`submit` 建任务，`poll` 查任务，`wait` 由适配器内部完成轮询。 |
 | `taskId` | string 或 number | poll 时必填 | 现有异步任务标识。 |
 | `maxWaitSeconds` | number | 否 | `wait` 模式的最大等待时长。 |
-| `pollIntervalSeconds` | number | 否 | `wait` 模式轮询间隔。当前工具默认 `10` 秒。 |
+| `pollIntervalSeconds` | number | 否 | `wait` 模式轮询间隔。当前工具默认 `60` 秒。 |
 
 ### 关键词指标最小请求示例
 
