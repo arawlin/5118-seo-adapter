@@ -153,22 +153,19 @@ describe("async tools", () => {
           jsonResponse({
             errcode: "0",
             errmsg: "success",
-            data: {
-              list: [
-                {
-                  word: "%E6%AF%94%E7%89%B9%E5%B8%81%E8%A1%8C%E6%83%85",
-                  weight: "85",
-                  mobile_index: "230",
-                  bidword_wisepv: "340",
-                  rank: "3",
-                  url: "https%3A%2F%2Fexample.com%2Fbtc",
-                },
-              ],
-              page_index: 1,
-              page_size: 20,
-              page_count: 1,
-              total: 1,
-            },
+            taskid: 50724567,
+            total: 1,
+            page_count: 1,
+            page_index: 1,
+            page_size: 20,
+            data: [
+              {
+                word: "%E6%AF%94%E7%89%B9%E5%B8%81%E8%A1%8C%E6%83%85",
+                weight: "85",
+                mobile_index: "230",
+                bidword_wisepv: "340",
+              },
+            ],
           }),
         ),
     );
@@ -211,8 +208,6 @@ describe("async tools", () => {
       weight: 85,
       mobileIndex: 230,
       mobileSearchVolume: 340,
-      rank: 3,
-      url: "https://example.com/btc",
     });
     assertEnvelopeMatchesOutputSchema("get_mobile_traffic_keywords_5118", trafficResult);
   });

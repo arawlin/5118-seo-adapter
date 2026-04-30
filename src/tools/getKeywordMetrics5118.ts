@@ -139,56 +139,36 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(KEYWORD_METRICS_DAT
 
 function normalizeKeywordMetricsResponse(raw: unknown): KeywordMetricsData {
   const root = asRecord(raw);
-  const data = root.data;
-  const dataRecord = asRecord(data);
-  const list =
-    asArray(data).length > 0
-      ? asArray(data)
-      : asArray(dataRecord.keyword_param).length > 0
-        ? asArray(dataRecord.keyword_param)
-        : asArray(dataRecord.list);
+  const data = asRecord(root.data);
+  const list = asArray(data.keyword_param);
 
   return {
     items: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: toStringOrNull(record.keyword ?? record.word),
+        keyword: toStringOrNull(record.keyword),
         index: toNumber(record.index),
-        mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
-        haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
-        douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
-        toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
-        googleIndex: toNumber(record.google_index ?? record.googleIndex),
-        kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
-        weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
-        longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
-        bidCompanyCount: toNumber(
-          record.bidword_company_count ?? record.bid_company_count ?? record.bidCompanyCount,
-        ),
-        cpc: toNumber(record.bidword_price ?? record.cpc ?? record.bid_price ?? record.bidPrice),
-        competition: toNumber(record.bidword_kwc ?? record.competition ?? record.compete),
-        pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pc_pv ?? record.pcSearchVolume),
-        mobileSearchVolume: toNumber(
-          record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
-        ),
-        recommendedBidMin: toNumber(
-          record.bidword_recommendprice_min ?? record.recommended_bid_min ?? record.recommendedBidMin,
-        ),
-        recommendedBidMax: toNumber(
-          record.bidword_recommendprice_max ?? record.recommended_bid_max ?? record.recommendedBidMax,
-        ),
-        recommendedBidAvg: toNumber(
-          record.bidword_recommend_price_avg ??
-            record.recommended_bid_avg ??
-            record.recommendedBidAvg,
-        ),
-        ageBest: toStringOrNull(record.age_best ?? record.ageBest),
-        ageBestValue: toNumber(record.age_best_value ?? record.ageBestValue),
-        sexMale: toNumber(record.sex_male ?? record.sexMale),
-        sexFemale: toNumber(record.sex_female ?? record.sexFemale),
-        bidReason: toStringOrNull(
-          record.bidword_showreasons ?? record.bidReason ?? record.sem_reason,
-        ),
+        mobileIndex: toNumber(record.mobile_index),
+        haosouIndex: toNumber(record.haosou_index),
+        douyinIndex: toNumber(record.douyin_index),
+        toutiaoIndex: toNumber(record.toutiao_index),
+        googleIndex: toNumber(record.google_index),
+        kuaishouIndex: toNumber(record.kuaishou_index),
+        weiboIndex: toNumber(record.weibo_index),
+        longKeywordCount: toNumber(record.long_keyword_count),
+        bidCompanyCount: toNumber(record.bidword_company_count),
+        cpc: toNumber(record.bidword_price),
+        competition: toNumber(record.bidword_kwc),
+        pcSearchVolume: toNumber(record.bidword_pcpv),
+        mobileSearchVolume: toNumber(record.bidword_wisepv),
+        recommendedBidMin: toNumber(record.bidword_recommendprice_min),
+        recommendedBidMax: toNumber(record.bidword_recommendprice_max),
+        recommendedBidAvg: toNumber(record.bidword_recommend_price_avg),
+        ageBest: toStringOrNull(record.age_best),
+        ageBestValue: toNumber(record.age_best_value),
+        sexMale: toNumber(record.sex_male),
+        sexFemale: toNumber(record.sex_female),
+        bidReason: toStringOrNull(record.bidword_showreasons),
       };
     }),
   };
@@ -243,18 +223,12 @@ function resolveKeywordMetricsMeta(raw: unknown): KeywordMetricsResponseMeta {
   const data = root.data;
   const taskId = extractTaskIdFromRoot(root);
 
-  if (Array.isArray(data)) {
-    return { taskId, dataReady: data.length > 0 };
-  }
-
   if (!data || typeof data !== "object") {
     return { taskId, dataReady: false };
   }
 
   const record = data as Record<string, unknown>;
-  const dataReady =
-    (Array.isArray(record.keyword_param) && record.keyword_param.length > 0) ||
-    (Array.isArray(record.list) && record.list.length > 0);
+  const dataReady = Array.isArray(record.keyword_param) && record.keyword_param.length > 0;
 
   return { taskId, dataReady };
 }

@@ -1,16 +1,18 @@
 {
   "errcode": "0",
   "errmsg": "success",
-  "data": {
-    "list": [
-      {
-        "word": "%E6%AF%94%E7%89%B9%E5%B8%81%E4%BB%B7%E6%A0%BC",
-        "platform": "baidu"
-      },
-      {
-        "word": "%E6%AF%94%E7%89%B9%E5%B8%81%E8%A1%8C%E6%83%85",
-        "platform": "baidu"
-      }
-    ]
-  }
+  "data": [
+    {
+      "word": "%E6%AF%94%E7%89%B9%E5%B8%81",
+      "promote_word": "%E6%AF%94%E7%89%B9%E5%B8%81%E4%BB%B7%E6%A0%BC",
+      "platform": "baidu",
+      "add_time": "2024-01-01T00:00:00.000"
+    },
+    {
+      "word": "%E6%AF%94%E7%89%B9%E5%B8%81",
+      "promote_word": "%E6%AF%94%E7%89%B9%E5%B8%81%E8%A1%8C%E6%83%85",
+      "platform": "baidu",
+      "add_time": "2024-01-02T00:00:00.000"
+    }
+  ]
 }

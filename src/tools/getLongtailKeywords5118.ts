@@ -143,52 +143,38 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(LONGTAIL_KEYWORDS_D
 function normalizeLongtailKeywordsResponse(raw: unknown): LongtailKeywordsData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  // Vendor spec uses `data.word`; older internal fixtures used `data.list`. Accept both.
-  const list =
-    asArray(data.word).length > 0
-      ? asArray(data.word)
-      : asArray(data.list).length > 0
-        ? asArray(data.list)
-        : asArray(data.keywords);
+  const list = asArray(data.word);
 
   const keywords = list.map((item) => {
     const record = asRecord(item);
     return {
-      keyword: toStringOrNull(record.keyword ?? record.word),
+      keyword: toStringOrNull(record.keyword),
       index: toNumber(record.index),
-      mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
-      haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
-      douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
-      toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
-      longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
-      bidCompanyCount: toNumber(
-        record.bidword_company_count ?? record.bid_company_count ?? record.bidCompanyCount,
-      ),
-      pageUrl: toStringOrNull(record.page_url ?? record.pageUrl),
-      competition: toNumber(record.bidword_kwc ?? record.competition ?? record.compete),
-      pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pc_pv ?? record.pcSearchVolume),
-      mobileSearchVolume: toNumber(
-        record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
-      ),
-      semReason: toStringOrNull(record.sem_reason ?? record.semReason),
-      semPrice: toStringOrNull(record.sem_price ?? record.semPrice),
-      semRecommendPriceAvg: toNumber(
-        record.sem_recommend_price_avg ??
-          record.bidword_recommend_price_avg ??
-          record.semRecommendPriceAvg,
-      ),
-      googleIndex: toNumber(record.google_index ?? record.googleIndex),
-      kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
-      weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+      mobileIndex: toNumber(record.mobile_index),
+      haosouIndex: toNumber(record.haosou_index),
+      douyinIndex: toNumber(record.douyin_index),
+      toutiaoIndex: toNumber(record.toutiao_index),
+      longKeywordCount: toNumber(record.long_keyword_count),
+      bidCompanyCount: toNumber(record.bidword_company_count),
+      pageUrl: toStringOrNull(record.page_url),
+      competition: toNumber(record.bidword_kwc),
+      pcSearchVolume: toNumber(record.bidword_pcpv),
+      mobileSearchVolume: toNumber(record.bidword_wisepv),
+      semReason: toStringOrNull(record.sem_reason),
+      semPrice: toStringOrNull(record.sem_price),
+      semRecommendPriceAvg: toNumber(record.sem_recommend_price_avg),
+      googleIndex: toNumber(record.google_index),
+      kuaishouIndex: toNumber(record.kuaishou_index),
+      weiboIndex: toNumber(record.weibo_index),
     };
   });
 
   return {
     keywords,
     pagination: createPagination(
-      data.page_index ?? data.pageIndex,
-      data.page_size ?? data.pageSize,
-      data.page_count ?? data.pageCount,
+      data.page_index,
+      data.page_size,
+      data.page_count,
       data.total,
     ),
   };

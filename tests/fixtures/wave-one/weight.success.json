@@ -3,17 +3,9 @@
   "errmsg": "",
   "data": {
     "result": [
-      {
-        "type": "BaiduPCWeight",
-        "weight": "10+"
-      },
-      {
-        "type": "BaiduMobileWeight",
-        "weight": "5-"
-      },
-      {
-        "SMWeight": "8+"
-      }
+      { "BaiduPCWeight": "10+" },
+      { "BaiduMobileWeight": "5-" },
+      { "SMWeight": "8+" }
     ]
   }
 }

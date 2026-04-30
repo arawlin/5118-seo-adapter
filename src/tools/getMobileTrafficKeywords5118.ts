@@ -77,15 +77,6 @@ export const MOBILE_TRAFFIC_KEYWORD_ITEM_OUTPUT_SCHEMA = z.object({
   keyword: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
     "Mined mobile traffic word (5118 field `word`).",
   ),
-  index: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
-    "Generic traffic index echoed by the upstream when present. Often null on this endpoint; prefer `mobileIndex` and `mobileSearchVolume`.",
-  ),
-  rank: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
-    "Position of the term inside the mined list. Stable order across pages; not a SERP rank.",
-  ),
-  url: STRING_OR_NULL_OUTPUT_SCHEMA.describe(
-    "Representative URL associated by 5118 with this term, if any.",
-  ),
   weight: NON_NEGATIVE_INTEGER_OR_NULL_OUTPUT_SCHEMA.describe(
     "Mining-weight score from 5118 (价值量). Higher values are more strategic for mobile traffic.",
   ),
@@ -126,40 +117,24 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(MOBILE_TRAFFIC_KEYW
 
 function normalizeMobileTrafficKeywordsResponse(raw: unknown): MobileTrafficKeywordsData {
   const root = asRecord(raw);
-  // Vendor spec: `data` is the rows array directly and pagination fields live at the root.
-  // Older internal fixtures wrap rows under `data.list` and pagination inside `data`. Accept both.
-  const dataAsArray = asArray(root.data);
-  const data = asRecord(root.data);
-  const list =
-    dataAsArray.length > 0
-      ? dataAsArray
-      : asArray(data.list).length > 0
-        ? asArray(data.list)
-        : asArray(data.keywords);
-
-  const paginationSource = dataAsArray.length > 0 ? root : data;
+  // Vendor spec: `data` is the rows array directly; pagination fields live at the root.
+  const list = asArray(root.data);
 
   return {
     keywords: list.map((item) => {
       const record = asRecord(item);
       return {
-        // Vendor field is `word`; fixtures use `keyword`. Accept both.
-        keyword: toStringOrNull(record.word ?? record.keyword),
-        index: toNumber(record.index),
-        rank: toNumber(record.rank ?? record.position),
-        url: toStringOrNull(record.url),
+        keyword: toStringOrNull(record.word),
         weight: toNumber(record.weight),
-        mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
-        mobileSearchVolume: toNumber(
-          record.bidword_wisepv ?? record.wise_pv ?? record.mobileSearchVolume,
-        ),
+        mobileIndex: toNumber(record.mobile_index),
+        mobileSearchVolume: toNumber(record.bidword_wisepv),
       };
     }),
     pagination: createPagination(
-      paginationSource.page_index ?? paginationSource.pageIndex,
-      paginationSource.page_size ?? paginationSource.pageSize,
-      paginationSource.page_count ?? paginationSource.pageCount,
-      paginationSource.total,
+      root.page_index,
+      root.page_size,
+      root.page_count,
+      root.total,
     ),
   };
 }

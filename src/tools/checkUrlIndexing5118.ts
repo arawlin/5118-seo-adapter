@@ -104,24 +104,23 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(URL_INDEXING_DATA_O
 function normalizeUrlIndexingResponse(raw: unknown): UrlIndexingData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = asArray(data.include_result).length > 0
-    ? asArray(data.include_result)
-    : asArray(data.list);
+  // Vendor real shape: data.include_result[] with { url, status, title, time }.
+  const list = asArray(data.include_result);
 
   return {
     items: list.map((item) => {
       const record = asRecord(item);
       return {
         url: toStringOrNull(record.url),
-        status: toNumber(record.status ?? record.include_status),
+        status: toNumber(record.status),
         title: toStringOrNull(record.title),
-        snapshotTime: toStringOrNull(record.time ?? record.snapshot_time ?? record.snapshotTime),
+        snapshotTime: toStringOrNull(record.time),
       };
     }),
-    total: toNumber(data.total ?? root.total),
-    checkStatus: toNumber(data.check_status ?? data.checkStatus),
-    submitTime: toStringOrNull(data.submit_time ?? data.submitTime),
-    finishedTime: toStringOrNull(data.finished_time ?? data.finishedTime),
+    total: toNumber(data.total),
+    checkStatus: toNumber(data.check_status),
+    submitTime: toStringOrNull(data.submit_time),
+    finishedTime: toStringOrNull(data.finished_time),
   };
 }
 
@@ -179,8 +178,8 @@ function resolveUrlIndexingMeta(raw: unknown): UrlIndexingMeta {
   }
 
   const record = data as Record<string, unknown>;
-  const checkStatus = Number(record.check_status ?? record.checkStatus);
-  const includeResult = record.include_result ?? record.list;
+  const checkStatus = Number(record.check_status);
+  const includeResult = record.include_result;
   const dataReady = checkStatus === 1 || (checkStatus !== 0 && Array.isArray(includeResult));
 
   return { taskId, dataReady };

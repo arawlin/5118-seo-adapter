@@ -93,40 +93,19 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SUGGEST_TERMS_DATA_
 
 function normalizeSuggestTermsResponse(raw: unknown): SuggestTermsData {
   const root = asRecord(raw);
-  // Vendor spec returns `data` as an array directly. Older internal fixtures wrapped rows under
-  // `data.list` / `data.suggestions`. Accept both shapes.
-  const list =
-    asArray(root.data).length > 0
-      ? asArray(root.data)
-      : asArray(asRecord(root.data).list).length > 0
-        ? asArray(asRecord(root.data).list)
-        : asArray(asRecord(root.data).suggestions);
+  // Vendor spec: `data` is the rows array directly.
+  const list = asArray(root.data);
 
   return {
     suggestions: list.map((item) => {
-      if (typeof item === "string") {
-        return {
-          term: item,
-          sourceWord: item,
-          promotedTerm: item,
-          platform: null,
-          addTime: null,
-        };
-      }
-
       const record = asRecord(item);
       return {
-        term: toStringOrNull(
-          record.promote_word ?? record.promoteWord ?? record.word ?? record.keyword ?? record.term,
-        ),
-        sourceWord: toStringOrNull(
-          record.word ?? record.keyword ?? record.source_word ?? record.sourceWord,
-        ),
-        promotedTerm: toStringOrNull(
-          record.promote_word ?? record.promoteWord ?? record.term ?? record.word ?? record.keyword,
-        ),
+        // Canonical surface form is the platform-promoted term.
+        term: toStringOrNull(record.promote_word),
+        sourceWord: toStringOrNull(record.word),
+        promotedTerm: toStringOrNull(record.promote_word),
         platform: toStringOrNull(record.platform),
-        addTime: toStringOrNull(record.add_time ?? record.addTime),
+        addTime: toStringOrNull(record.add_time),
       };
     }),
   };

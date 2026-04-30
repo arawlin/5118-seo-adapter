@@ -119,40 +119,36 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(BID_KEYWORDS_DATA_O
 function normalizeBidKeywordsResponse(raw: unknown): BidKeywordsData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = asArray(data.keywords).length > 0 ? asArray(data.keywords) : asArray(data.list);
+  const list = asArray(data.keywords);
 
   return {
     items: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: toStringOrNull(record.keyword ?? record.word),
+        keyword: toStringOrNull(record.keyword),
         title: toStringOrNull(record.title),
-        intro: toStringOrNull(record.intro ?? record.description),
-        semPrice: toStringOrNull(record.bidword_semprice ?? record.semPrice),
-        pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pcSearchVolume),
-        mobileSearchVolume: toNumber(record.bidword_wisepv ?? record.mobileSearchVolume),
-        competition: toNumber(record.bidword_kwc ?? record.competition),
+        intro: toStringOrNull(record.intro),
+        semPrice: toStringOrNull(record.bidword_semprice),
+        pcSearchVolume: toNumber(record.bidword_pcpv),
+        mobileSearchVolume: toNumber(record.bidword_wisepv),
+        competition: toNumber(record.bidword_kwc),
         index: toNumber(record.index),
-        mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
-        haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
-        recentBidCompanyCount: toNumber(
-          record.urlcount_30day ?? record.recentBidCompanyCount,
-        ),
-        totalBidCompanyCount: toNumber(record.urlcount ?? record.totalBidCompanyCount),
-        firstSeenAt: toStringOrNull(record.firstfindtime ?? record.firstSeenAt),
-        lastSeenAt: toStringOrNull(record.joindate ?? record.lastSeenAt),
-        recommendedBidAvg: toNumber(
-          record.bidword_recommend_price_avg ?? record.recommendedBidAvg,
-        ),
-        googleIndex: toNumber(record.google_index ?? record.googleIndex),
-        kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
-        weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+        mobileIndex: toNumber(record.mobile_index),
+        haosouIndex: toNumber(record.haosou_index),
+        recentBidCompanyCount: toNumber(record.urlcount_30day),
+        totalBidCompanyCount: toNumber(record.urlcount),
+        firstSeenAt: toStringOrNull(record.firstfindtime),
+        lastSeenAt: toStringOrNull(record.joindate),
+        recommendedBidAvg: toNumber(record.bidword_recommend_price_avg),
+        googleIndex: toNumber(record.google_index),
+        kuaishouIndex: toNumber(record.kuaishou_index),
+        weiboIndex: toNumber(record.weibo_index),
       };
     }),
     pagination: createPagination(
-      data.page_index ?? data.pageIndex,
-      data.page_size ?? data.pageSize,
-      data.page_count ?? data.pageCount,
+      data.page_index,
+      data.page_size,
+      data.page_count,
       data.total,
     ),
   };

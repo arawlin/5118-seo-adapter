@@ -93,19 +93,19 @@ interface RankSnapshotMeta {
 function normalizeRankResultItem(rankItem: unknown): RankSnapshotResultItem {
   const rankRecord = asRecord(rankItem);
   return {
-    siteUrl: toStringOrNull(rankRecord.site_url ?? rankRecord.siteUrl),
+    siteUrl: toStringOrNull(rankRecord.site_url),
     rank: toNumber(rankRecord.rank),
-    pageTitle: toStringOrNull(rankRecord.page_title ?? rankRecord.pageTitle),
-    pageUrl: toStringOrNull(rankRecord.page_url ?? rankRecord.pageUrl),
+    pageTitle: toStringOrNull(rankRecord.page_title),
+    pageUrl: toStringOrNull(rankRecord.page_url),
     top100: toNumber(rankRecord.top100),
-    siteWeight: toStringOrNull(rankRecord.site_weight ?? rankRecord.siteWeight),
+    siteWeight: toStringOrNull(rankRecord.site_weight),
   };
 }
 
 function normalizeRankSnapshotResponse(raw: unknown): RankSnapshotData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = asArray(data.keywordmonitor).length > 0 ? asArray(data.keywordmonitor) : asArray(data.list);
+  const list = asArray(data.keywordmonitor);
 
   return {
     rankings: list.map((item) => {
@@ -113,8 +113,8 @@ function normalizeRankSnapshotResponse(raw: unknown): RankSnapshotData {
       const ranks = asArray(record.ranks);
 
       return {
-        keyword: toStringOrNull(record.keyword ?? record.word),
-        searchEngine: toStringOrNull(record.search_engine ?? record.searchEngine),
+        keyword: toStringOrNull(record.keyword),
+        searchEngine: toStringOrNull(record.search_engine),
         ip: toStringOrNull(record.ip),
         area: toStringOrNull(record.area),
         network: toStringOrNull(record.network),
@@ -146,7 +146,7 @@ function resolveRankSnapshotMeta(raw: unknown): RankSnapshotMeta {
   }
 
   const record = data as Record<string, unknown>;
-  const dataReady = Array.isArray(record.keywordmonitor) || Array.isArray(record.list);
+  const dataReady = Array.isArray(record.keywordmonitor);
 
   return { taskId, dataReady };
 }

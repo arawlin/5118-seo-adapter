@@ -101,37 +101,34 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(DOMAIN_RANK_KEYWORD
 function normalizeDomainRankKeywordsResponse(raw: unknown): DomainRankKeywordsData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = asArray(data.domain).length > 0 ? asArray(data.domain) : asArray(data.list);
+  const list = asArray(data.domain);
 
   return {
     items: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: toStringOrNull(record.keyword ?? record.word),
+        keyword: toStringOrNull(record.keyword),
         rank: toNumber(record.rank),
         index: toNumber(record.index),
-        mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
-        haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
-        pageTitle: toStringOrNull(record.page_title ?? record.pageTitle),
-        pageUrl: toStringOrNull(record.page_url ?? record.pageUrl ?? record.url),
-        bidCompanyCount: toNumber(
-          record.bidword_companycount ?? record.bidword_company_count ?? record.bidCompanyCount,
-        ),
-        competition: toNumber(record.bidword_kwc ?? record.competition),
-        pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pcSearchVolume),
-        mobileSearchVolume: toNumber(record.bidword_wisepv ?? record.mobileSearchVolume),
-        recommendedBidAvg: toNumber(
-          record.bidword_recommend_price_avg ?? record.recommendedBidAvg,
-        ),
-        googleIndex: toNumber(record.google_index ?? record.googleIndex),
-        kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
-        weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+        mobileIndex: toNumber(record.mobile_index),
+        haosouIndex: toNumber(record.haosou_index),
+        pageTitle: toStringOrNull(record.page_title),
+        // Vendor field is `url` (the ranking page URL).
+        pageUrl: toStringOrNull(record.url),
+        bidCompanyCount: toNumber(record.bidword_companycount),
+        competition: toNumber(record.bidword_kwc),
+        pcSearchVolume: toNumber(record.bidword_pcpv),
+        mobileSearchVolume: toNumber(record.bidword_wisepv),
+        recommendedBidAvg: toNumber(record.bidword_recommend_price_avg),
+        googleIndex: toNumber(record.google_index),
+        kuaishouIndex: toNumber(record.kuaishou_index),
+        weiboIndex: toNumber(record.weibo_index),
       };
     }),
     pagination: createPagination(
-      data.page_index ?? data.pageIndex,
-      data.page_size ?? data.pageSize,
-      data.page_count ?? data.pageCount,
+      data.page_index,
+      data.page_size,
+      data.page_count,
       data.total,
     ),
   };

@@ -75,30 +75,30 @@ interface TopSiteSnapshotMeta {
 function normalizeRankResultItem(rankItem: unknown): z.infer<typeof RANK_SNAPSHOT_RESULT_ITEM_OUTPUT_SCHEMA> {
   const rankRecord = asRecord(rankItem);
   return {
-    siteUrl: toStringOrNull(rankRecord.site_url ?? rankRecord.siteUrl),
+    siteUrl: toStringOrNull(rankRecord.site_url),
     rank: toNumber(rankRecord.rank),
-    pageTitle: toStringOrNull(rankRecord.page_title ?? rankRecord.pageTitle),
-    pageUrl: toStringOrNull(rankRecord.page_url ?? rankRecord.pageUrl),
+    pageTitle: toStringOrNull(rankRecord.page_title),
+    pageUrl: toStringOrNull(rankRecord.page_url),
     top100: toNumber(rankRecord.top100),
-    siteWeight: toStringOrNull(rankRecord.site_weight ?? rankRecord.siteWeight),
+    siteWeight: toStringOrNull(rankRecord.site_weight),
   };
 }
 
 function normalizeTopSiteSnapshotsResponse(raw: unknown): TopSiteSnapshotsData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = firstArray(data, ["keyword_monitor", "keywordMonitor", "keywordmonitor", "list"]);
+  const list = asArray(data.keyword_monitor);
 
   return {
     siteSnapshots: list.map((item) => {
       const record = asRecord(item);
       return {
-        keyword: toStringOrNull(record.keyword ?? record.word),
-        searchEngine: toStringOrNull(record.search_engine ?? record.searchEngine),
+        keyword: toStringOrNull(record.keyword),
+        searchEngine: toStringOrNull(record.search_engine),
         ip: toStringOrNull(record.ip),
         area: toStringOrNull(record.area),
         network: toStringOrNull(record.network),
-        checkedAt: toStringOrNull(record.time ?? record.checkedAt),
+        checkedAt: toStringOrNull(record.time),
         ranks: asArray(record.ranks).map((rankItem) => normalizeRankResultItem(rankItem)),
       };
     }),
@@ -127,7 +127,7 @@ function resolveTopSiteSnapshotMeta(raw: unknown): TopSiteSnapshotMeta {
   }
 
   const record = data as Record<string, unknown>;
-  const dataReady = Array.isArray(record.keyword_monitor) || Array.isArray(record.list);
+  const dataReady = Array.isArray(record.keyword_monitor);
 
   return { taskId, dataReady };
 }

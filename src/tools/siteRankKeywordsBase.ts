@@ -103,44 +103,41 @@ interface SiteRankKeywordsConfig {
 function normalizeSiteRankKeywordRecord(item: unknown): SiteRankKeywordItem {
   const record = asRecord(item);
   return {
-    keyword: toStringOrNull(record.keyword ?? record.word),
+    keyword: toStringOrNull(record.keyword),
     rank: toNumber(record.rank),
-    pageTitle: toStringOrNull(record.page_title ?? record.pageTitle),
-    pageUrl: toStringOrNull(record.page_url ?? record.pageUrl ?? record.url),
-    bidCompanyCount: toNumber(
-      record.bidword_companycount ?? record.bidword_company_count ?? record.bidCompanyCount,
-    ),
-    longKeywordCount: toNumber(record.long_keyword_count ?? record.longKeywordCount),
+    pageTitle: toStringOrNull(record.page_title),
+    // PC variant uses `url`; mobile variant uses `page_url`. Both map to pageUrl.
+    pageUrl: toStringOrNull(record.page_url ?? record.url),
+    bidCompanyCount: toNumber(record.bidword_companycount),
+    longKeywordCount: toNumber(record.long_keyword_count),
     index: toNumber(record.index),
-    mobileIndex: toNumber(record.mobile_index ?? record.mobileIndex),
-    haosouIndex: toNumber(record.haosou_index ?? record.haosouIndex),
-    douyinIndex: toNumber(record.douyin_index ?? record.douyinIndex),
-    toutiaoIndex: toNumber(record.toutiao_index ?? record.toutiaoIndex),
-    competition: toNumber(record.bidword_kwc ?? record.competition),
-    pcSearchVolume: toNumber(record.bidword_pcpv ?? record.pcSearchVolume),
-    mobileSearchVolume: toNumber(record.bidword_wisepv ?? record.mobileSearchVolume),
-    semReason: toStringOrNull(record.sem_reason ?? record.semReason),
-    semPrice: toStringOrNull(record.sem_price ?? record.semPrice),
-    recommendedBidAvg: toNumber(
-      record.bidword_recommend_price_avg ?? record.recommendedBidAvg,
-    ),
-    googleIndex: toNumber(record.google_index ?? record.googleIndex),
-    kuaishouIndex: toNumber(record.kuaishou_index ?? record.kuaishouIndex),
-    weiboIndex: toNumber(record.weibo_index ?? record.weiboIndex),
+    mobileIndex: toNumber(record.mobile_index),
+    haosouIndex: toNumber(record.haosou_index),
+    douyinIndex: toNumber(record.douyin_index),
+    toutiaoIndex: toNumber(record.toutiao_index),
+    competition: toNumber(record.bidword_kwc),
+    pcSearchVolume: toNumber(record.bidword_pcpv),
+    mobileSearchVolume: toNumber(record.bidword_wisepv),
+    semReason: toStringOrNull(record.sem_reason),
+    semPrice: toStringOrNull(record.sem_price),
+    recommendedBidAvg: toNumber(record.bidword_recommend_price_avg),
+    googleIndex: toNumber(record.google_index),
+    kuaishouIndex: toNumber(record.kuaishou_index),
+    weiboIndex: toNumber(record.weibo_index),
   };
 }
 
 function normalizeSiteRankKeywords(raw: unknown, dataKeys: readonly string[]): SiteRankKeywordsData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = firstArray(data, [...dataKeys, "list"]);
+  const list = firstArray(data, dataKeys);
 
   return {
     items: list.map((item) => normalizeSiteRankKeywordRecord(item)),
     pagination: createPagination(
-      data.page_index ?? data.pageIndex,
-      data.page_size ?? data.pageSize,
-      data.page_count ?? data.pageCount,
+      data.page_index,
+      data.page_size,
+      data.page_count,
       data.total,
     ),
   };

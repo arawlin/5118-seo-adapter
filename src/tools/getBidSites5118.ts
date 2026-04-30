@@ -114,7 +114,7 @@ export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(BID_SITES_DATA_OUTP
 function normalizeBidSitesResponse(raw: unknown): BidSitesData {
   const root = asRecord(raw);
   const data = asRecord(root.data);
-  const list = firstArray(data, ["keyword_bidsite", "items", "list"]);
+  const list = asArray(data.keyword_bidsite);
 
   return {
     items: list.map((item) => {
@@ -122,20 +122,20 @@ function normalizeBidSitesResponse(raw: unknown): BidSitesData {
       return {
         title: toStringOrNull(record.title),
         intro: toStringOrNull(record.intro),
-        siteTitle: toStringOrNull(record.urltitle ?? record.siteTitle),
-        siteUrl: toStringOrNull(record.url ?? record.siteUrl),
-        fullUrl: toStringOrNull(record.fullurl ?? record.fullUrl),
-        companyName: toStringOrNull(record.companyname ?? record.companyName),
-        baiduPcWeight: toStringOrNull(record.baidupcweight ?? record.baiduPcWeight),
-        bidCount: toNumber(record.bidCount ?? record.bid_count),
-        lastSeenAt: toStringOrNull(record.join_date ?? record.lastSeenAt),
-        firstSeenAt: toStringOrNull(record.firstfindtime ?? record.firstSeenAt),
+        siteTitle: toStringOrNull(record.urltitle),
+        siteUrl: toStringOrNull(record.url),
+        fullUrl: toStringOrNull(record.fullurl),
+        companyName: toStringOrNull(record.companyname),
+        baiduPcWeight: toStringOrNull(record.baidupcweight),
+        bidCount: toNumber(record.bidCount),
+        lastSeenAt: toStringOrNull(record.join_date),
+        firstSeenAt: toStringOrNull(record.firstfindtime),
       };
     }),
     pagination: createPagination(
-      data.page_index ?? data.pageIndex,
-      data.page_size ?? data.pageSize,
-      data.page_count ?? data.pageCount,
+      data.page_index,
+      data.page_size,
+      data.page_count,
       data.total,
     ),
   };

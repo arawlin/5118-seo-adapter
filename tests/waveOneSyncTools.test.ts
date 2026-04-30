@@ -61,7 +61,7 @@ describe("sync tools", () => {
             errcode: "0",
             errmsg: "",
             data: {
-              list: [
+              word: [
                 {
                   keyword: "%E8%A1%AC%E8%A1%AB",
                   index: "1063",
@@ -94,16 +94,14 @@ describe("sync tools", () => {
           jsonResponse({
             errcode: "0",
             errmsg: "",
-            data: {
-              list: [
-                {
-                  word: "%E5%9B%BD%E5%BA%86%E5%81%87%E6%9C%9F",
-                  promote_word: "%E5%9B%BD%E5%BA%86%E5%81%87%E6%9C%9F%E5%8E%BB%E5%93%AA%E7%8E%A9",
-                  platform: "zhihu",
-                  add_time: "2022-09-24T11:28:10.027",
-                },
-              ],
-            },
+            data: [
+              {
+                word: "%E5%9B%BD%E5%BA%86%E5%81%87%E6%9C%9F",
+                promote_word: "%E5%9B%BD%E5%BA%86%E5%81%87%E6%9C%9F%E5%8E%BB%E5%93%AA%E7%8E%A9",
+                platform: "zhihu",
+                add_time: "2022-09-24T11:28:10.027",
+              },
+            ],
           }),
         ),
     );
