@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { checkUrlIndexing5118Handler } from "../src/tools/checkUrlIndexing5118.js";
 import { getMobileRankSnapshot5118Handler } from "../src/tools/getMobileRankSnapshot5118.js";
 import { ToolError } from "../src/lib/errorMapper.js";
+import { resetHttp5118ClientRuntimeForTests } from "../src/lib/http5118Client.js";
 import { getKeywordMetrics5118Handler } from "../src/tools/getKeywordMetrics5118.js";
 import { getMobileTrafficKeywords5118Handler } from "../src/tools/getMobileTrafficKeywords5118.js";
 import { getPcRankSnapshot5118Handler } from "../src/tools/getPcRankSnapshot5118.js";
@@ -20,16 +21,25 @@ function applyTestApiEnv(): void {
   process.env.API_5118_RANK_PC = "k-rank-pc";
   process.env.API_5118_RANK_MOBILE = "k-rank-mobile";
   process.env.API_5118_INCLUDE = "k-include";
+  process.env.MCP_5118_MIN_TIME_MS = "0";
+  process.env.MCP_5118_MAX_CONCURRENT = "5";
+  process.env.MCP_5118_RESERVOIR = "1000";
+  process.env.MCP_5118_MAX_RETRIES = "0";
+  process.env.MCP_5118_BASE_BACKOFF_MS = "0";
+  process.env.MCP_5118_MAX_BACKOFF_MS = "0";
+  process.env.MCP_5118_JITTER_MS = "0";
 }
 
 describe("async tools", () => {
   beforeEach(() => {
     applyTestApiEnv();
+    resetHttp5118ClientRuntimeForTests();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     process.env = { ...ENV_SNAPSHOT };
+    resetHttp5118ClientRuntimeForTests();
   });
 
   it("returns pending for keyword metrics submit", async () => {

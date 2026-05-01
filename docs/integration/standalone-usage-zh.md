@@ -54,6 +54,21 @@ Wave 2：
 - `API_5118_KWRANK_PC`
 - `API_5118_KWRANK_MOBILE`
 
+### MCP 侧请求控制
+
+请求限流与重试逻辑统一在 MCP 层实现。skill 只需要直接调用工具，不应
+额外实现 sleep 或重试循环。
+
+可选的 MCP 请求控制环境变量：
+
+- `MCP_5118_MIN_TIME_MS`（默认 `1000`）
+- `MCP_5118_MAX_CONCURRENT`（默认 `1`）
+- `MCP_5118_RESERVOIR`（默认 `2`）
+- `MCP_5118_MAX_RETRIES`（默认 `3`）
+- `MCP_5118_BASE_BACKOFF_MS`（默认 `800`）
+- `MCP_5118_MAX_BACKOFF_MS`（默认 `3200`）
+- `MCP_5118_JITTER_MS`（默认 `300`）
+
 ## 构建与启动
 
 ```bash

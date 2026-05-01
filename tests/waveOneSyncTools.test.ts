@@ -7,6 +7,7 @@ import { getLongtailKeywords5118Handler } from "../src/tools/getLongtailKeywords
 import { getSiteWeight5118Handler } from "../src/tools/getSiteWeight5118.js";
 import { getSuggestTerms5118Handler } from "../src/tools/getSuggestTerms5118.js";
 import { ToolError } from "../src/lib/errorMapper.js";
+import { resetHttp5118ClientRuntimeForTests } from "../src/lib/http5118Client.js";
 import {
   assertEnvelopeMatchesOutputSchema,
   jsonResponse,
@@ -22,16 +23,25 @@ function applyTestApiEnv(): void {
   process.env.API_5118_DOMAIN_V2 = "k-domain";
   process.env.API_5118_BIDWORD_V2 = "k-bidword";
   process.env.API_5118_WEIGHT = "k-weight";
+  process.env.MCP_5118_MIN_TIME_MS = "0";
+  process.env.MCP_5118_MAX_CONCURRENT = "5";
+  process.env.MCP_5118_RESERVOIR = "1000";
+  process.env.MCP_5118_MAX_RETRIES = "0";
+  process.env.MCP_5118_BASE_BACKOFF_MS = "0";
+  process.env.MCP_5118_MAX_BACKOFF_MS = "0";
+  process.env.MCP_5118_JITTER_MS = "0";
 }
 
 describe("sync tools", () => {
   beforeEach(() => {
     applyTestApiEnv();
+    resetHttp5118ClientRuntimeForTests();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     process.env = { ...ENV_SNAPSHOT };
+    resetHttp5118ClientRuntimeForTests();
   });
 
   it("returns normalized longtail keywords and keeps raw payload", async () => {

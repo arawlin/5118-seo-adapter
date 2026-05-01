@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../src/lib/errorMapper.js";
+import { resetHttp5118ClientRuntimeForTests } from "../src/lib/http5118Client.js";
 import { getMobileTop50Sites5118Handler } from "../src/tools/getMobileTop50Sites5118.js";
 import { getPcTop50Sites5118Handler } from "../src/tools/getPcTop50Sites5118.js";
 import {
@@ -14,16 +15,25 @@ const ENV_SNAPSHOT = { ...process.env };
 function applyTestApiEnv(): void {
   process.env.API_5118_KWRANK_PC = "k-kwrank-pc";
   process.env.API_5118_KWRANK_MOBILE = "k-kwrank-mobile";
+  process.env.MCP_5118_MIN_TIME_MS = "0";
+  process.env.MCP_5118_MAX_CONCURRENT = "5";
+  process.env.MCP_5118_RESERVOIR = "1000";
+  process.env.MCP_5118_MAX_RETRIES = "0";
+  process.env.MCP_5118_BASE_BACKOFF_MS = "0";
+  process.env.MCP_5118_MAX_BACKOFF_MS = "0";
+  process.env.MCP_5118_JITTER_MS = "0";
 }
 
 describe("wave 2 async tools", () => {
   beforeEach(() => {
     applyTestApiEnv();
+    resetHttp5118ClientRuntimeForTests();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     process.env = { ...ENV_SNAPSHOT };
+    resetHttp5118ClientRuntimeForTests();
   });
 
   it("returns pending for PC top50 submit", async () => {
