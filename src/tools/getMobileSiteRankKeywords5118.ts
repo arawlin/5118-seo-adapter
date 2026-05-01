@@ -37,7 +37,7 @@ const CONFIG = {
   toolName: "get_mobile_site_rank_keywords_5118",
   apiName: "Mobile Site Rank Keywords Export API v2",
   endpoint: "/keyword/mobile/v2",
-  dataKeys: ["baidumobile"],
+  dataKeys: ["mobile"],
 } as const;
 
 export const TOOL_OUTPUT_SCHEMA = createResponseOutputSchema(SITE_RANK_KEYWORDS_DATA_OUTPUT_SCHEMA);
