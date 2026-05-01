@@ -20,12 +20,52 @@
         "--verbose"
       ],
       "env": {
-        "API_5118_LONGTAIL_V2": "${input:apiKey5118}"
+        "API_5118_LONGTAIL_V2": "${input:apiKey5118Longtail}"
       },
       "console": "integratedTerminal",
-      "skipFiles": [
-        "<node_internals>/**"
-      ]
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Frequency Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "frequency",
+        "--keyword",
+        "比特币",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_FREQ_WORDS": "${input:apiKey5118FreqWords}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Suggest Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "suggest",
+        "--word",
+        "比特币",
+        "--platform",
+        "baidu",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_SUGGEST": "${input:apiKey5118Suggest}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
     },
     {
       "name": "Debug 5118 Metrics Live",
@@ -38,7 +78,7 @@
         "--tool",
         "metrics",
         "--keywords",
-        "NBA",
+        "比特币",
         "--executionMode",
         "wait",
         "--verbose"
@@ -47,21 +87,379 @@
         "API_5118_KW_PARAM_V2": "${input:apiKey5118Metrics}"
       },
       "console": "integratedTerminal",
-      "skipFiles": [
-        "<node_internals>/**"
-      ]
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Traffic Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "traffic",
+        "--keyword",
+        "比特币",
+        "--executionMode",
+        "wait",
+        "--pageIndex",
+        "1",
+        "--pageSize",
+        "10",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_TRAFFIC": "${input:apiKey5118Traffic}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Domain Rank Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "domain-rank",
+        "--url",
+        "bitcoin.com",
+        "--pageIndex",
+        "1",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_DOMAIN_V2": "${input:apiKey5118Domain}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Bid Keywords Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "bid-keywords",
+        "--url",
+        "www.baidu.com",
+        "--pageIndex",
+        "1",
+        "--pageSize",
+        "10",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_BIDWORD_V2": "${input:apiKey5118BidWord}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Site Weight Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "weight",
+        "--url",
+        "bitcoin.com",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_WEIGHT": "${input:apiKey5118Weight}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Rank PC Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "rank-pc",
+        "--url",
+        "baidu.com",
+        "--keywords",
+        "比特币",
+        "--executionMode",
+        "wait",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_RANK_PC": "${input:apiKey5118RankPc}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Rank Mobile Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "rank-mobile",
+        "--url",
+        "m.baidu.com",
+        "--keywords",
+        "比特币",
+        "--executionMode",
+        "wait",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_RANK_MOBILE": "${input:apiKey5118RankMobile}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 URL Indexing Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "include",
+        "--urls",
+        "https://www.baidu.com/",
+        "--executionMode",
+        "wait",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_INCLUDE": "${input:apiKey5118Include}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 PC Site Rank Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "pc-site-rank",
+        "--url",
+        "www.jd.com",
+        "--pageIndex",
+        "1",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_BAIDUPC_V2": "${input:apiKey5118BaiduPc}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Mobile Site Rank Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "mobile-site-rank",
+        "--url",
+        "m.baidu.com",
+        "--pageIndex",
+        "1",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_MOBILE_V2": "${input:apiKey5118MobileV2}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Bid Sites Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "bid-sites",
+        "--keyword",
+        "比特币",
+        "--pageIndex",
+        "1",
+        "--pageSize",
+        "10",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_BIDSITE": "${input:apiKey5118BidSite}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 PC Top50 Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "top50-pc",
+        "--keywords",
+        "比特币",
+        "--executionMode",
+        "wait",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_KWRANK_PC": "${input:apiKey5118KwRankPc}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug 5118 Mobile Top50 Live",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/test-live-gate.mjs",
+        "--tool",
+        "top50-mobile",
+        "--keywords",
+        "比特币",
+        "--executionMode",
+        "wait",
+        "--verbose"
+      ],
+      "env": {
+        "API_5118_KWRANK_MOBILE": "${input:apiKey5118KwRankMobile}"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
     }
   ],
   "inputs": [
     {
-      "id": "apiKey5118",
+      "id": "apiKey5118Longtail",
       "type": "promptString",
-      "description": "Enter API_5118_LONGTAIL_V2 for 5118 live debug"
+      "description": "Enter API_5118_LONGTAIL_V2",
+      "password": true
+    },
+    {
+      "id": "apiKey5118FreqWords",
+      "type": "promptString",
+      "description": "Enter API_5118_FREQ_WORDS",
+      "password": true
+    },
+    {
+      "id": "apiKey5118Suggest",
+      "type": "promptString",
+      "description": "Enter API_5118_SUGGEST",
+      "password": true
     },
     {
       "id": "apiKey5118Metrics",
       "type": "promptString",
-      "description": "Enter API_5118_KW_PARAM_V2 for 5118 metrics debug"
+      "description": "Enter API_5118_KW_PARAM_V2",
+      "password": true
+    },
+    {
+      "id": "apiKey5118Traffic",
+      "type": "promptString",
+      "description": "Enter API_5118_TRAFFIC",
+      "password": true
+    },
+    {
+      "id": "apiKey5118Domain",
+      "type": "promptString",
+      "description": "Enter API_5118_DOMAIN_V2",
+      "password": true
+    },
+    {
+      "id": "apiKey5118BidWord",
+      "type": "promptString",
+      "description": "Enter API_5118_BIDWORD_V2",
+      "password": true
+    },
+    {
+      "id": "apiKey5118Weight",
+      "type": "promptString",
+      "description": "Enter API_5118_WEIGHT",
+      "password": true
+    },
+    {
+      "id": "apiKey5118RankPc",
+      "type": "promptString",
+      "description": "Enter API_5118_RANK_PC",
+      "password": true
+    },
+    {
+      "id": "apiKey5118RankMobile",
+      "type": "promptString",
+      "description": "Enter API_5118_RANK_MOBILE",
+      "password": true
+    },
+    {
+      "id": "apiKey5118Include",
+      "type": "promptString",
+      "description": "Enter API_5118_INCLUDE",
+      "password": true
+    },
+    {
+      "id": "apiKey5118BaiduPc",
+      "type": "promptString",
+      "description": "Enter API_5118_BAIDUPC_V2",
+      "password": true
+    },
+    {
+      "id": "apiKey5118MobileV2",
+      "type": "promptString",
+      "description": "Enter API_5118_MOBILE_V2",
+      "password": true
+    },
+    {
+      "id": "apiKey5118BidSite",
+      "type": "promptString",
+      "description": "Enter API_5118_BIDSITE",
+      "password": true
+    },
+    {
+      "id": "apiKey5118KwRankPc",
+      "type": "promptString",
+      "description": "Enter API_5118_KWRANK_PC",
+      "password": true
+    },
+    {
+      "id": "apiKey5118KwRankMobile",
+      "type": "promptString",
+      "description": "Enter API_5118_KWRANK_MOBILE",
+      "password": true
     }
   ]
 }
