@@ -122,6 +122,31 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 Use `--sequence <path>` when you want to run a custom JSON scenario file instead
 of the built-in `wave-one`, `wave-two`, or `all-tools` sequence.
 
+## External MCP Caller
+
+Use `scripts/mcp-call.mjs` when you want to launch `dist/index.js` as a real MCP
+stdio server and invoke tools from an external MCP client process, similar to how
+an MCP agent calls tools.
+
+Representative commands:
+
+```bash
+npm run mcp:call -- --listTools
+API_5118_SUGGEST=xxxx npm run mcp:call -- --tool suggest --args '{"word":"比特币","platform":"baidu"}'
+API_5118_RANK_PC=xxxx npm run mcp:call -- --tool rank-pc --args '{"url":"baidu.com","keywords":["比特币"],"executionMode":"wait"}'
+API_5118_SUGGEST=xxxx npm run mcp:call -- --tool get_suggest_terms_5118 --argsFile ./request.json
+```
+
+Supported options:
+
+- `--server <path>`: MCP server entry file (default `dist/index.js`)
+- `--listTools`: print all registered tools
+- `--tool <name>`: alias or full MCP tool name
+- `--args <json>`: JSON object for `tools/call` arguments
+- `--argsFile <path>`: load JSON object for `tools/call` arguments
+
+The caller validates required API key env vars per tool before calling.
+
 ## Stdio Transport Example
 
 Use [examples/vscode-mcp.stdio.example.json](../../examples/vscode-mcp.stdio.example.json)

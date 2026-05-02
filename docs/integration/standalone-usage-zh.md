@@ -121,6 +121,31 @@ API_5118_BAIDUPC_V2=xxxx API_5118_MOBILE_V2=xxxx API_5118_BIDSITE=xxxx API_5118_
 如果你需要不同的执行顺序或输入组合，可以使用 `--sequence <path>` 指向
 自定义 JSON 场景文件，而不是使用内置的 `wave-one`、`wave-two` 或 `all-tools`。
 
+## 外部 MCP 调用脚本
+
+当你希望以标准 MCP 客户端方式（而不是直接调用 handler）来调试时，可使用
+`scripts/mcp-call.mjs`。该脚本会把 `dist/index.js` 作为真实 MCP stdio server
+启动，然后由外部 MCP client 进程发起工具调用，调用链路与 agent 调用工具一致。
+
+常见命令示例：
+
+```bash
+npm run mcp:call -- --listTools
+API_5118_SUGGEST=xxxx npm run mcp:call -- --tool suggest --args '{"word":"比特币","platform":"baidu"}'
+API_5118_RANK_PC=xxxx npm run mcp:call -- --tool rank-pc --args '{"url":"baidu.com","keywords":["比特币"],"executionMode":"wait"}'
+API_5118_SUGGEST=xxxx npm run mcp:call -- --tool get_suggest_terms_5118 --argsFile ./request.json
+```
+
+支持的参数：
+
+- `--server <path>`：MCP server 入口文件（默认 `dist/index.js`）
+- `--listTools`：打印当前已注册的全部工具
+- `--tool <name>`：工具别名或完整 MCP 工具名
+- `--args <json>`：`tools/call` 的 JSON 对象参数
+- `--argsFile <path>`：从文件加载 `tools/call` 的 JSON 对象参数
+
+该脚本会在发起调用前，按工具检查必需的 API key 环境变量。
+
 ## Stdio 配置示例
 
 请参考 [examples/vscode-mcp.stdio.example.json](../../examples/vscode-mcp.stdio.example.json)
