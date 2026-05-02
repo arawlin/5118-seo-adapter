@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import Bottleneck from "bottleneck";
 import pRetry from "p-retry";
 import type { RequestControlConfig } from "../config/requestControl.js";
@@ -10,9 +9,7 @@ function sleepMs(ms: number): Promise<void> {
   });
 }
 
-function hashApiKey(apiKey: string): string {
-  return createHash("sha256").update(apiKey).digest("hex").slice(0, 12);
-}
+const GLOBAL_LIMITER_KEY = "global";
 
 function isLikelyNetworkFailure(error: unknown): boolean {
   if (error instanceof TypeError) {
@@ -73,8 +70,8 @@ export function createRequestController(config: RequestControlConfig): RequestCo
     reservoirRefreshInterval: config.reservoirRefreshIntervalMs,
   });
 
-  const buildLimiterKey = (endpoint: string, apiKey: string): string => {
-    return `${endpoint}:${hashApiKey(apiKey)}`;
+  const buildLimiterKey = (_endpoint: string, _apiKey: string): string => {
+    return GLOBAL_LIMITER_KEY;
   };
 
   const scheduleWithControl = async <TData>(

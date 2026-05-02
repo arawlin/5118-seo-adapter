@@ -25,16 +25,16 @@ function createConfig(overrides: Partial<RequestControlConfig> = {}): RequestCon
 }
 
 describe("requestController", () => {
-  it("builds limiter key without exposing raw api key", () => {
+  it("uses one global limiter key for all requests", () => {
     const controller = createRequestController(createConfig());
     const limiterKey = controller.buildLimiterKey("/suggest/list", "secret-api-key-value");
 
-    expect(limiterKey).toContain("/suggest/list:");
+    expect(limiterKey).toBe("global");
     expect(limiterKey).not.toContain("secret-api-key-value");
-    expect(limiterKey.split(":")[1]).toHaveLength(12);
+    expect(controller.buildLimiterKey("/rank/list", "another-key")).toBe("global");
   });
 
-  it("serializes jobs for the same endpoint and api key", async () => {
+  it("serializes jobs across different endpoints and api keys", async () => {
     const controller = createRequestController(createConfig({ maxConcurrent: 1 }));
     const timeline: string[] = [];
 
@@ -50,8 +50,8 @@ describe("requestController", () => {
     });
 
     const second = controller.scheduleWithControl({
-      endpoint: "/suggest/list",
-      apiKey: "k-suggest",
+      endpoint: "/rank/list",
+      apiKey: "k-rank",
       run: async () => {
         timeline.push("second-start");
         timeline.push("second-end");

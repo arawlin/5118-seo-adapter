@@ -59,6 +59,8 @@ Set one API key env var per tool you plan to call:
 Request throttling and retry are implemented in MCP. Skills should call tools
 directly and should not implement separate sleep/retry loops.
 
+All outbound requests in the same MCP process share one global limiter queue.
+
 Optional MCP request-control env vars:
 
 - `MCP_5118_MIN_TIME_MS` (default `1500`)
