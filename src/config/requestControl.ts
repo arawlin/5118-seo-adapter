@@ -11,15 +11,15 @@ export interface RequestControlConfig {
 }
 
 export const REQUEST_CONTROL_DEFAULTS: RequestControlConfig = {
-  minTimeMs: 1000,
+  minTimeMs: 1500,
   maxConcurrent: 1,
-  reservoir: 2,
-  reservoirRefreshAmount: 2,
+  reservoir: 1,
+  reservoirRefreshAmount: 1,
   reservoirRefreshIntervalMs: 1000,
-  maxRetries: 3,
-  baseBackoffMs: 800,
-  maxBackoffMs: 3200,
-  jitterMs: 300,
+  maxRetries: 2,
+  baseBackoffMs: 1200,
+  maxBackoffMs: 5000,
+  jitterMs: 500,
 };
 
 export const REQUEST_CONTROL_ENV_KEYS = {

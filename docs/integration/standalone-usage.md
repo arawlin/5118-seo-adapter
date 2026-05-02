@@ -61,13 +61,13 @@ directly and should not implement separate sleep/retry loops.
 
 Optional MCP request-control env vars:
 
-- `MCP_5118_MIN_TIME_MS` (default `1000`)
+- `MCP_5118_MIN_TIME_MS` (default `1500`)
 - `MCP_5118_MAX_CONCURRENT` (default `1`)
-- `MCP_5118_RESERVOIR` (default `2`)
-- `MCP_5118_MAX_RETRIES` (default `3`)
-- `MCP_5118_BASE_BACKOFF_MS` (default `800`)
-- `MCP_5118_MAX_BACKOFF_MS` (default `3200`)
-- `MCP_5118_JITTER_MS` (default `300`)
+- `MCP_5118_RESERVOIR` (default `1`)
+- `MCP_5118_MAX_RETRIES` (default `2`)
+- `MCP_5118_BASE_BACKOFF_MS` (default `1200`)
+- `MCP_5118_MAX_BACKOFF_MS` (default `5000`)
+- `MCP_5118_JITTER_MS` (default `500`)
 
 ## Build and Run
 
